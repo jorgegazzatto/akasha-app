@@ -13,14 +13,32 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=production
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
+      - path: .env
+        required: false
+    expose:
+      - "8000"
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       - db
       - redis
     volumes:
       - ./backend/audio_cache:/app/audio_cache
+    networks:
+      - dokploy-network
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.akasha-backend-web.rule=Host(`apiakh.elohdigital.com.br`)"
+      - "traefik.http.routers.akasha-backend-web.entrypoints=web"
+      - "traefik.http.routers.akasha-backend-web.middlewares=redirect-to-https@file"
+      - "traefik.http.routers.akasha-backend-websecure.rule=Host(`apiakh.elohdigital.com.br`)"
+      - "traefik.http.routers.akasha-backend-websecure.entrypoints=websecure"
+      - "traefik.http.routers.akasha-backend-websecure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.akasha-backend-websecure.loadbalancer.server.port=8000"
 
   # Worker Assíncrono para Geração de Áudios (Celery)
   worker:
@@ -34,12 +52,17 @@ services:
       - DATABASE_URL=postgresql+asyncpg://akasha_user:akasha_secure_pass@db:5432/akasha_db
       - REDIS_URL=redis://redis:6379/0
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
+      - path: .env
+        required: false
     depends_on:
       - redis
       - db
     volumes:
       - ./backend/audio_cache:/app/audio_cache
+    networks:
+      - default
 
   # Banco de Dados PostgreSQL
   db:
@@ -52,19 +75,24 @@ services:
       - POSTGRES_DB=akasha_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - default
 
   # Redis para Fila de Tarefas
   redis:
     image: redis:7-alpine
     container_name: akasha_redis
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - default
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  dokploy-network:
+    external: true
+  default:
