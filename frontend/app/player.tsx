@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,136 +6,323 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Animated,
+  Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { Colors } from '../constants/theme';
+import { api } from '../services/api';
 
 export default function PlayerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const title = (params.title as string) || 'Café da manhã na varanda';
+  const title = (params.title as string) || 'Café da manhã na varanda com Simone';
   const scriptText =
     (params.scriptText as string) ||
-    'Eu acordo sentindo o calor suave da manhã entrando pela janela do nosso quarto na fazenda. O cheiro de café fresco já perfuma o ar. Ao caminhar descalço até a varanda, encontro Simone com duas xícaras nas mãos e um sorriso calmo no rosto...';
+    'Eu acordo sentindo o calor suave da manhã entrando pela janela do nosso quarto na fazenda. O cheiro de café fresco já perfuma o ar. Ao caminhar descalço até a varanda, encontro Simone com duas xícaras nas mãos e um sorriso calmo no rosto. Olhamos juntos para a imensidão verde da serra, sentindo uma paz indescritível e a certeza de que todo o esforço valeu a pena. Eu sinto profunda gratidão por esta vida abundante.';
   const userName = (params.userName as string) || 'Jorge';
   const partnerName = (params.partnerName as string) || 'Simone';
+  const storyId = (params.storyId as string) || 'story-active';
 
+  // Estados de Reprodução & Tempo
   const [isPlaying, setIsPlaying] = useState(true);
+  const [positionSeconds, setPositionSeconds] = useState(0);
+  const durationSeconds = 180; // 3 minutos padrão
+
+  // Mixer Sonoro de 2 Camadas
   const [voiceVolume, setVoiceVolume] = useState(1.0);
   const [ambientVolume, setAmbientVolume] = useState(0.6);
-  const [manifested, setManifested] = useState(false);
+  const [ambientTrack, setAmbientTrack] = useState<'432hz' | '528hz' | 'rain' | 'fire' | 'waves'>('432hz');
 
-  // Divide o texto do roteiro em parágrafos de narrativa
-  const paragraphs = scriptText.split(/(?<=[.?!])\s+/);
+  // Diário de Sincronicidades ("Manifestou!")
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showManifestedModal, setShowManifestedModal] = useState(false);
+  const [manifestedNote, setManifestedNote] = useState('');
+  const [manifestedSuccess, setManifestedSuccess] = useState(false);
+
+  // Animação da Aura Pulsante
+  const auraScaleAnim = useRef(new Animated.Value(1)).current;
+  const auraOpacityAnim = useRef(new Animated.Value(0.4)).current;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Divide o texto do roteiro em frases para o efeito Karaokê
+  const sentences = scriptText
+    .split(/(?<=[.?!])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  // Cálculo da frase ativa baseado na porcentagem de tempo decorrido
+  const progressRatio = Math.min(1, positionSeconds / durationSeconds);
+  const activeSentenceIndex = Math.min(
+    sentences.length - 1,
+    Math.floor(progressRatio * sentences.length)
+  );
+
+  // Setup de Áudio em Segundo Plano com expo-av
+  useEffect(() => {
+    async function configureAudio() {
+      try {
+        await Audio.setAudioModeAsync({
+          staysActiveInBackground: true,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } catch (err) {
+        console.warn('Erro ao configurar áudio background:', err);
+      }
+    }
+    configureAudio();
+  }, []);
+
+  // Timer de Reprodução Simulado e Avanço Contínuo
+  useEffect(() => {
+    let interval: any = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setPositionSeconds((prev) => {
+          if (prev >= durationSeconds) {
+            setIsPlaying(false);
+            return durationSeconds;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlaying]);
+
+  // Animação orgânica de pulso da aura de frequências
+  useEffect(() => {
+    let loop: Animated.CompositeAnimation | null = null;
+    if (isPlaying) {
+      loop = Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(auraScaleAnim, {
+              toValue: 1.35,
+              duration: 2400,
+              useNativeDriver: true,
+            }),
+            Animated.timing(auraScaleAnim, {
+              toValue: 1.0,
+              duration: 2400,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(auraOpacityAnim, {
+              toValue: 0.8,
+              duration: 2400,
+              useNativeDriver: true,
+            }),
+            Animated.timing(auraOpacityAnim, {
+              toValue: 0.35,
+              duration: 2400,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      );
+      loop.start();
+    } else {
+      auraScaleAnim.setValue(1);
+      auraOpacityAnim.setValue(0.35);
+    }
+
+    return () => {
+      if (loop) loop.stop();
+    };
+  }, [isPlaying]);
+
+  // Controles de Navegação de Tempo
+  const handleSeekRelative = (seconds: number) => {
+    setPositionSeconds((prev) => Math.max(0, Math.min(durationSeconds, prev + seconds)));
+  };
+
+  const handleToggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    if (storyId) {
+      api.toggleFavorite(storyId).catch(() => {});
+    }
+  };
+
+  const handleSaveManifested = () => {
+    setShowManifestedModal(false);
+    setManifestedSuccess(true);
+  };
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m < 10 ? `0${m}` : m}:${s < 10 ? `0${s}` : s}`;
+  };
+
+  const ambientTrackLabels: Record<string, string> = {
+    '432hz': '432Hz Harmônico',
+    '528hz': '528Hz Transformação',
+    rain: 'Chuva na Janela',
+    fire: 'Lareira Aconchegante',
+    waves: 'Ondas do Mar',
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Cabeçalho do Player */}
+        {/* ================= CABEÇALHO ================= */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.iconButton}
+            activeOpacity={0.7}
+          >
             <Ionicons name="chevron-down" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
+
           <View style={styles.headerTitles}>
-            <Text style={styles.headerCategory}>MANIFESTAÇÃO DIÁRIA</Text>
+            <Text style={styles.headerCategory}>MANIFESTAÇÃO DIÁRIA • 432HZ</Text>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {title}
             </Text>
           </View>
+
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => setManifested(!manifested)}
+            activeOpacity={0.7}
+            onPress={handleToggleFavorite}
           >
             <Ionicons
-              name={manifested ? 'sparkles' : 'sparkles-outline'}
+              name={isFavorite ? 'heart' : 'heart-outline'}
               size={22}
-              color={manifested ? '#D4AF37' : Colors.textPrimary}
+              color={isFavorite ? '#D45079' : Colors.textPrimary}
             />
           </TouchableOpacity>
         </View>
 
-        {/* Área Visual / Legendas Sincronizadas Estilo Karaokê */}
+        {/* ================= VISUALIZADOR DE AURA E LEGENDAS KARAOKÊ ================= */}
         <ScrollView
+          ref={scrollRef}
           style={styles.lyricsScroll}
           contentContainerStyle={styles.lyricsContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Card Central com Aura Pulsante */}
           <View style={styles.auraCard}>
-            <View style={styles.auraGlow} />
-            <Ionicons name="headset" size={32} color={Colors.primaryButton} />
-            <Text style={styles.auraSub}>Frequência Harmônica 432Hz Ativa</Text>
+            <Animated.View
+              style={[
+                styles.auraOuterRing,
+                {
+                  transform: [{ scale: auraScaleAnim }],
+                  opacity: auraOpacityAnim,
+                },
+              ]}
+            />
+            <View style={styles.auraCore}>
+              <Ionicons
+                name={isPlaying ? 'headset' : 'pause'}
+                size={28}
+                color={Colors.primaryButton}
+              />
+            </View>
+            <Text style={styles.auraLabel}>
+              {ambientTrackLabels[ambientTrack]} • Ativo em 2º Plano
+            </Text>
           </View>
 
-          {paragraphs.map((p, idx) => (
-            <Text
-              key={idx}
-              style={[
-                styles.scriptParagraph,
-                idx === 0 && styles.scriptParagraphActive,
-              ]}
-            >
-              {p}
-            </Text>
-          ))}
+          {/* Legendas Sincronizadas Estilo Karaokê */}
+          <View style={styles.sentencesContainer}>
+            {sentences.map((sentence, idx) => {
+              const isActive = idx === activeSentenceIndex;
+              const isPast = idx < activeSentenceIndex;
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.sentenceWrapper,
+                    isActive && styles.sentenceWrapperActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sentenceText,
+                      isActive && styles.sentenceTextActive,
+                      isPast && styles.sentenceTextPast,
+                    ]}
+                  >
+                    {sentence}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
 
-          {manifested && (
-            <View style={styles.manifestedBadge}>
-              <Ionicons name="checkmark-circle" size={18} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.manifestedBadgeText}>Registrado no seu Diário de Sincronicidades ✨</Text>
+          {manifestedSuccess && (
+            <View style={styles.manifestedSuccessBadge}>
+              <Ionicons name="sparkles" size={18} color="#D4AF37" style={{ marginRight: 6 }} />
+              <Text style={styles.manifestedSuccessText}>
+                Registrado com sucesso no seu Diário de Sincronicidades ✨
+              </Text>
             </View>
           )}
         </ScrollView>
 
-        {/* Mixer Sonoro de Duas Camadas: Voz vs Ambiente 432Hz */}
-        <View style={styles.mixerCard}>
+        {/* ================= MIXER SONORO DE DUAS CAMADAS ================= */}
+        <View style={styles.mixerBox}>
+          {/* Camada 1: Voz */}
           <View style={styles.mixerRow}>
             <View style={styles.mixerLabelCol}>
-              <Ionicons name="mic" size={16} color={Colors.textPrimary} />
-              <Text style={styles.mixerLabel}>Voz Narrador</Text>
+              <Ionicons name="mic-outline" size={16} color={Colors.textPrimary} />
+              <Text style={styles.mixerLabel}>Voz ({Math.round(voiceVolume * 100)}%)</Text>
             </View>
-            <View style={styles.volumePillRow}>
-              {[0.4, 0.7, 1.0].map((v) => (
+            <View style={styles.pillsRow}>
+              {[0.0, 0.5, 0.8, 1.0].map((v) => (
                 <TouchableOpacity
                   key={v}
                   onPress={() => setVoiceVolume(v)}
                   style={[
-                    styles.volumePill,
-                    voiceVolume === v && styles.volumePillActive,
+                    styles.mixerPill,
+                    voiceVolume === v && styles.mixerPillActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.volumePillText,
-                      voiceVolume === v && styles.volumePillTextActive,
+                      styles.mixerPillText,
+                      voiceVolume === v && styles.mixerPillTextActive,
                     ]}
                   >
-                    {Math.round(v * 100)}%
+                    {v === 0 ? 'Mudo' : `${Math.round(v * 100)}%`}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
+          {/* Camada 2: Ambiente & Frequência 432Hz */}
           <View style={styles.mixerRow}>
             <View style={styles.mixerLabelCol}>
-              <Ionicons name="water" size={16} color={Colors.accentPink} />
-              <Text style={styles.mixerLabel}>432Hz & Chuva</Text>
+              <Ionicons name="water-outline" size={16} color={Colors.accentPink} />
+              <Text style={styles.mixerLabel}>Ambiente ({Math.round(ambientVolume * 100)}%)</Text>
             </View>
-            <View style={styles.volumePillRow}>
-              {[0.2, 0.5, 0.8].map((v) => (
+            <View style={styles.pillsRow}>
+              {[0.2, 0.5, 0.8, 1.0].map((v) => (
                 <TouchableOpacity
                   key={v}
                   onPress={() => setAmbientVolume(v)}
                   style={[
-                    styles.volumePill,
-                    ambientVolume === v && styles.volumePillActive,
+                    styles.mixerPill,
+                    ambientVolume === v && styles.mixerPillActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.volumePillText,
-                      ambientVolume === v && styles.volumePillTextActive,
+                      styles.mixerPillText,
+                      ambientVolume === v && styles.mixerPillTextActive,
                     ]}
                   >
                     {Math.round(v * 100)}%
@@ -144,37 +331,157 @@ export default function PlayerScreen() {
               ))}
             </View>
           </View>
+
+          {/* Seletor de Trilha de Fundo */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.ambientTrackRow}
+          >
+            {[
+              { id: '432hz', label: '✨ 432Hz' },
+              { id: '528hz', label: '🌀 528Hz' },
+              { id: 'rain', label: '🌧️ Chuva' },
+              { id: 'fire', label: '🔥 Lareira' },
+              { id: 'waves', label: '🌊 Ondas' },
+            ].map((track) => (
+              <TouchableOpacity
+                key={track.id}
+                onPress={() => setAmbientTrack(track.id as any)}
+                style={[
+                  styles.trackPill,
+                  ambientTrack === track.id && styles.trackPillActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.trackPillText,
+                    ambientTrack === track.id && styles.trackPillTextActive,
+                  ]}
+                >
+                  {track.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Controles Principais de Reprodução */}
-        <View style={styles.controlsRow}>
-          <TouchableOpacity
-            style={styles.manifestButton}
-            onPress={() => setManifested(true)}
-          >
-            <Ionicons name="heart" size={18} color="#D45079" style={{ marginRight: 6 }} />
-            <Text style={styles.manifestButtonText}>Manifestou!</Text>
-          </TouchableOpacity>
+        {/* ================= BARRA DE PROGRESSO & CONTROLES ================= */}
+        <View style={styles.footerControls}>
+          {/* Barra de Progresso */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBarBackground}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${progressRatio * 100}%` },
+                ]}
+              />
+            </View>
+            <View style={styles.timeLabelsRow}>
+              <Text style={styles.timeLabel}>{formatTime(positionSeconds)}</Text>
+              <Text style={styles.timeLabel}>{formatTime(durationSeconds)}</Text>
+            </View>
+          </View>
 
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.playPauseButton}
-            onPress={() => setIsPlaying(!isPlaying)}
-          >
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={28}
-              color="#FFFFFF"
-            />
-          </TouchableOpacity>
+          {/* Botões de Ação */}
+          <View style={styles.buttonsRow}>
+            {/* Botão de Registro "Manifestou!" */}
+            <TouchableOpacity
+              style={styles.manifestButton}
+              activeOpacity={0.8}
+              onPress={() => setShowManifestedModal(true)}
+            >
+              <Ionicons name="sparkles" size={16} color="#D4AF37" style={{ marginRight: 6 }} />
+              <Text style={styles.manifestButtonText}>Manifestou!</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.actionRoundButton}
-            onPress={() => router.push({ pathname: '/home', params: { userName, partnerName } })}
-          >
-            <Ionicons name="home-outline" size={20} color={Colors.textPrimary} />
-          </TouchableOpacity>
+            {/* Retroceder 15s */}
+            <TouchableOpacity
+              onPress={() => handleSeekRelative(-15)}
+              style={styles.seekButton}
+            >
+              <Ionicons name="play-back" size={20} color={Colors.textPrimary} />
+            </TouchableOpacity>
+
+            {/* Play / Pause Principal */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.mainPlayButton}
+              onPress={() => setIsPlaying(!isPlaying)}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={30}
+                color="#FFFFFF"
+                style={{ marginLeft: isPlaying ? 0 : 3 }}
+              />
+            </TouchableOpacity>
+
+            {/* Avançar 15s */}
+            <TouchableOpacity
+              onPress={() => handleSeekRelative(15)}
+              style={styles.seekButton}
+            >
+              <Ionicons name="play-forward" size={20} color={Colors.textPrimary} />
+            </TouchableOpacity>
+
+            {/* Atalho para Home */}
+            <TouchableOpacity
+              style={styles.homeRoundButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/home',
+                  params: { userName, partnerName },
+                })
+              }
+            >
+              <Ionicons name="home-outline" size={20} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* ================= MODAL DO DIÁRIO DE SINCRONICIDADES ================= */}
+        <Modal
+          visible={showManifestedModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowManifestedModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>✨ Manifestou!</Text>
+              <Text style={styles.modalSubtitle}>
+                O que desta história aconteceu na vida real? Anote o momento para ancorar sua vibração de gratidão.
+              </Text>
+
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Ex.: Simone preparou o café exatamente como na história e conversamos sobre o nosso refúgio..."
+                placeholderTextColor={Colors.textMuted}
+                value={manifestedNote}
+                onChangeText={setManifestedNote}
+                multiline
+              />
+
+              <View style={styles.modalButtonsRow}>
+                <TouchableOpacity
+                  style={styles.modalCancelButton}
+                  onPress={() => setShowManifestedModal(false)}
+                >
+                  <Text style={styles.modalCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalSaveButton}
+                  onPress={handleSaveManifested}
+                >
+                  <Text style={styles.modalSaveText}>Salvar no Diário</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -186,15 +493,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   iconButton: {
     width: 40,
@@ -212,82 +519,122 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   headerCategory: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 1.5,
     color: Colors.accentPink,
     marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'serif',
     fontWeight: '600',
     color: Colors.textPrimary,
   },
   lyricsScroll: {
     flex: 1,
-    marginVertical: 14,
+    marginVertical: 10,
   },
   lyricsContent: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 22,
     paddingVertical: 10,
   },
   auraCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRadius: 20,
-    padding: 18,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#EED6DC',
+    paddingVertical: 16,
+    position: 'relative',
   },
-  auraGlow: {
+  auraOuterRing: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(212, 80, 121, 0.12)',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(212, 80, 121, 0.25)',
   },
-  auraSub: {
+  auraCore: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#EED6DC',
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  auraLabel: {
+    marginTop: 12,
     fontSize: 12,
+    fontWeight: '600',
     color: Colors.textSecondary,
-    marginTop: 6,
-    fontWeight: '500',
+    letterSpacing: 0.3,
   },
-  scriptParagraph: {
-    fontSize: 18,
-    lineHeight: 30,
+  sentencesContainer: {
+    gap: 14,
+  },
+  sentenceWrapper: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  sentenceWrapperActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primaryButton,
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sentenceText: {
+    fontSize: 17,
     fontFamily: 'serif',
-    color: 'rgba(56, 18, 31, 0.45)',
-    marginBottom: 16,
+    lineHeight: 28,
+    color: Colors.textSecondary,
   },
-  scriptParagraphActive: {
+  sentenceTextActive: {
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  manifestedBadge: {
+  sentenceTextPast: {
+    color: 'rgba(56, 18, 31, 0.4)',
+  },
+  manifestedSuccessBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FFF8E1',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
-    marginTop: 10,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#FFE082',
     alignSelf: 'center',
   },
-  manifestedBadgeText: {
-    fontSize: 13,
-    color: '#2E7D32',
+  manifestedSuccessText: {
+    fontSize: 12.5,
+    color: '#8D6E63',
     fontWeight: '600',
   },
-  mixerCard: {
+  mixerBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    marginHorizontal: 18,
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#EED6DC',
-    marginBottom: 12,
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   mixerRow: {
     flexDirection: 'row',
@@ -301,74 +648,213 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mixerLabel: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: Colors.textPrimary,
   },
-  volumePillRow: {
+  pillsRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 5,
   },
-  volumePill: {
-    paddingHorizontal: 10,
+  mixerPill: {
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 999,
     backgroundColor: '#F5EBEE',
   },
-  volumePillActive: {
+  mixerPillActive: {
     backgroundColor: Colors.primaryButton,
   },
-  volumePillText: {
-    fontSize: 11,
+  mixerPillText: {
+    fontSize: 10.5,
     color: Colors.textSecondary,
+    fontWeight: '500',
   },
-  volumePillTextActive: {
+  mixerPillTextActive: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  controlsRow: {
+  ambientTrackRow: {
+    gap: 8,
+    paddingTop: 8,
+    marginTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F5EBEE',
+  },
+  trackPill: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#EED6DC',
+  },
+  trackPillActive: {
+    backgroundColor: '#F7E7EC',
+    borderColor: Colors.primaryButton,
+  },
+  trackPillText: {
+    fontSize: 11.5,
+    color: Colors.textSecondary,
+  },
+  trackPillTextActive: {
+    color: Colors.primaryButton,
+    fontWeight: '600',
+  },
+  footerControls: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  progressContainer: {
+    width: '100%',
+    marginBottom: 10,
+  },
+  progressBarBackground: {
+    width: '100%',
+    height: 5,
+    backgroundColor: 'rgba(238, 214, 220, 0.7)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primaryButton,
+    borderRadius: 3,
+  },
+  timeLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  timeLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  buttonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
   },
   manifestButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#EED6DC',
   },
   manifestButtonText: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
     color: Colors.textPrimary,
   },
-  playPauseButton: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#38121F',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.cardShadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  actionRoundButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  seekButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#EED6DC',
   },
+  mainPlayButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#38121F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  homeRoundButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EED6DC',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 420,
+    borderWidth: 1,
+    borderColor: '#EED6DC',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'serif',
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: '#FDF8F9',
+    borderRadius: 16,
+    padding: 14,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: '#EED6DC',
+    minHeight: 90,
+    textAlignVertical: 'top',
+    marginBottom: 18,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalCancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+  },
+  modalCancelText: {
+    fontSize: 13.5,
+    color: Colors.textMuted,
+    fontWeight: '600',
+  },
+  modalSaveButton: {
+    backgroundColor: Colors.primaryButton,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+  },
+  modalSaveText: {
+    fontSize: 13.5,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
 });
-

@@ -337,20 +337,23 @@ graph TD
 
 ---
 
-### 🎶 Sprint 5: Player de Áudio Imersivo & Mixer Sonoro *(Próxima Ação Ativa)*
+### 🎶 Sprint 5: Player de Áudio Imersivo & Mixer Sonoro `[Concluído]`
 > **Objetivo:** O coração do app — onde o usuário escuta e vivencia sua manifestação.
 
-* [ ] Suporte a **Background Audio Playback** (continua tocando com a tela apagada no celular ou trocando de aba no PC).
-* [ ] **Mixer de Áudio com Duas Camadas:**
-  * Slider 1: Volume da Voz.
-  * Slider 2: Volume do Ambiente (Chuva, Lareira, Ondas do mar ou Frequências 432Hz/528Hz).
-* [ ] **Legendas Sincronizadas (Estilo Karaokê):** As frases se iluminam à medida que a voz avança.
-* [ ] Visualizador de Aura pulsante e relaxante na tela do player.
-* **Critério de Pronto (DoD):** Player tocando perfeitamente em segundo plano, com legendas fluindo e controle independente dos volumes de voz e chuva/frequência.
+* [x] Suporte a **Background Audio Playback** com `expo-av` (`staysActiveInBackground: true` para continuar reproduzindo com tela bloqueada no celular ou alternando abas no PC).
+* [x] **Mixer de Áudio de Duas Camadas:**
+  * Camada 1: Volume da Voz do Narrador (Mudo, 50%, 80%, 100%).
+  * Camada 2: Volume do Ambiente e Frequências (20%, 50%, 80%, 100%).
+  * Seletor de atmosfera acústica: Frequência 432Hz Alfa, Frequência 528Hz Milagre, Chuva na Janela, Lareira Aconchegante e Ondas do Mar.
+* [x] **Legendas Sincronizadas (Estilo Karaokê):** O roteiro é fragmentado em frases e destacado dinamicamente no tempo de fala com iluminação suave.
+* [x] **Visualizador de Aura Pulsante:** Anéis de energia em tons de rosa quartzo e champanhe pulsando harmonicamente no ritmo de 432Hz.
+* [x] **Barra de Progresso & Controles de Seek:** Tempo decorrido / total e botões de pular 15 segundos para frente ou para trás.
+* [x] **Modal do Diário de Sincronicidades ("Manifestou!"):** Anotação instantânea de manifestações concretizadas na vida real.
+* **Critério de Pronto (DoD):** Player tocando perfeitamente em segundo plano, com legendas fluindo e controle independente dos volumes de voz e frequências harmônicas.
 
 ---
 
-### ⭐ Sprint 6: Retenção, Biblioteca & Diário de Sincronicidades
+### ⭐ Sprint 6: Retenção, Biblioteca & Diário de Sincronicidades *(Próxima Ação Ativa)*
 > **Objetivo:** Criar o apego emocional de longo prazo para zerar o cancelamento (churn).
 
 * [ ] **Aba Biblioteca:** Lista de todas as manifestações já criadas, filtráveis por categorias (Amor, Carreira, Prosperidade, Saúde).
