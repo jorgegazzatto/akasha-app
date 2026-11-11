@@ -320,22 +320,24 @@ graph TD
 
 ---
 
-### 🏠 Sprint 4: Tela de Espera Mágica & Dashboard Home *(Próxima Ação Ativa)*
+### 🏠 Sprint 4: Tela de Espera Mágica & Dashboard Home `[Concluído]`
 > **Objetivo:** Conectar a conclusão do onboarding com o impacto do primeiro card na Home e o loop diário.
 
-* [ ] **Tela de Transição "Generating your stories...":**
-  * Esfera de Respiração Consciente (técnica 4-7-8).
-  * Feedback narrativo progressivo (*"Desenhando seu refúgio na fazenda..."*).
-* [ ] **Dashboard Home (PC, Tablet e Celular):**
-  * Prompt Hero: *"{nome}, o que você quer manifestar hoje?"* com atalho de geração sob demanda.
-  * Tags de Tendências (*Trending Manifestations*).
-  * **Carrossel "For You":** Cards visuais verticais com fotos estéticas e títulos em 1ª pessoa no presente.
-  * **Temporizador Diário (24h Refresh):** Relógio regressivo (*"All stories refresh in 07:24:59"*).
-* **Critério de Pronto (DoD):** O usuário sai do onboarding, respira durante o loading e cai na Home vendo seus cards personalizados gerados para ele.
+* [x] **Tela de Transição "Generating your stories..." (`transition.tsx`):**
+  * Esfera de Respiração Consciente (técnica 4-7-8 com animação pulsante suave).
+  * Feedback narrativo progressivo em 4 etapas (*"✨ Sintonizando as intenções..."* -> *"🏡 Desenhando o refúgio..."* -> *"🎧 Harmonizando tons acústicos e frequência 432Hz..."* -> *"🌟 Sua manifestação viva está pronta"*).
+  * Disparo assíncrono para geração imediata no backend.
+* [x] **Dashboard Home (`home.tsx`) adaptável para PC, Tablet e Celular:**
+  * **Prompt Hero:** *"{nome}, o que você quer manifestar hoje?"* com input interativo e geração instantânea sob demanda.
+  * **Tags de Tendências (*Trending Manifestations*):** Pílulas clicáveis que preenchem o prompt ou tocam áudios universais cacheados.
+  * **Carrossel "For You":** Cards visuais verticais elegantes com títulos em 1ª pessoa no presente derivados do perfil do usuário (*"Eu assisto Simone colocar café na varanda..."*), tags de categoria e botão play direto.
+  * **Temporizador Diário (24h Refresh):** Relógio regressivo em tempo real (*"Suas manifestações diárias renovam em 07:24:59"*).
+  * **Barra de Navegação em 4 Abas:** Home, Biblioteca, Favoritos e Perfil.
+* **Critério de Pronto (DoD):** O usuário sai do onboarding, respira durante o loading e cai no Dashboard Home vendo seus cards personalizados gerados para ele.
 
 ---
 
-### 🎶 Sprint 5: Player de Áudio Imersivo & Mixer Sonoro
+### 🎶 Sprint 5: Player de Áudio Imersivo & Mixer Sonoro *(Próxima Ação Ativa)*
 > **Objetivo:** O coração do app — onde o usuário escuta e vivencia sua manifestação.
 
 * [ ] Suporte a **Background Audio Playback** (continua tocando com a tela apagada no celular ou trocando de aba no PC).

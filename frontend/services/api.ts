@@ -111,7 +111,7 @@ export class AkashaApiClient {
   }
 
   /**
-   * Gera a primeira história de manifestação em 3 atos em 1ª pessoa no presente
+   * Gera uma história de manifestação em 3 atos em 1ª pessoa no presente
    */
   async generateStory(userId: string, category: string = 'Abundância & Amor'): Promise<StoryResponse> {
     const res = await fetch(`${this.baseUrl}/stories/generate/${userId}?category=${encodeURIComponent(category)}`, {
@@ -126,6 +126,27 @@ export class AkashaApiClient {
   }
 
   /**
+   * Obtém as histórias diárias de manifestação do usuário (ciclo de 24h)
+   */
+  async getDailyStories(userId: string): Promise<StoryResponse[]> {
+    const res = await fetch(`${this.baseUrl}/stories/user/${userId}/daily`);
+    if (!res.ok) throw new Error(`Erro ao obter histórias diárias: ${res.status}`);
+    return res.json();
+  }
+
+  /**
+   * Alterna o status de favorito de uma história
+   */
+  async toggleFavorite(storyId: string): Promise<StoryResponse> {
+    const res = await fetch(`${this.baseUrl}/stories/${storyId}/favorite`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error(`Erro ao favoritar história: ${res.status}`);
+    return res.json();
+  }
+
+  /**
    * Obtém a URL de streaming de áudio com suporte a HTTP 206
    */
   getAudioStreamUrl(filename: string): string {
@@ -134,3 +155,4 @@ export class AkashaApiClient {
 }
 
 export const api = new AkashaApiClient();
+

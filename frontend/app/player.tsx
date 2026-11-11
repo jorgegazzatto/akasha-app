@@ -170,7 +170,7 @@ export default function PlayerScreen() {
 
           <TouchableOpacity
             style={styles.actionRoundButton}
-            onPress={() => router.push('/')}
+            onPress={() => router.push({ pathname: '/home', params: { userName, partnerName } })}
           >
             <Ionicons name="home-outline" size={20} color={Colors.textPrimary} />
           </TouchableOpacity>
@@ -371,3 +371,4 @@ const styles = StyleSheet.create({
     borderColor: '#EED6DC',
   },
 });
+

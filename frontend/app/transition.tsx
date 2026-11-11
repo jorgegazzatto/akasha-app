@@ -159,14 +159,29 @@ export default function TransitionScreen() {
               <Text style={styles.subtleText}>Orquestrando seu refúgio...</Text>
             </View>
           ) : (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.listenButton}
-              onPress={handleStartListening}
-            >
-              <Ionicons name="headset-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-              <Text style={styles.listenButtonText}>Ouvir Minha Manifestação</Text>
-            </TouchableOpacity>
+            <View style={{ width: '100%', gap: 10 }}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.listenButton}
+                onPress={handleStartListening}
+              >
+                <Ionicons name="headset-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.listenButtonText}>Ouvir Minha Manifestação</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.homeShortcutButton}
+                onPress={() =>
+                  router.push({
+                    pathname: '/home',
+                    params: { userId, name: userName, partnerName },
+                  })
+                }
+              >
+                <Text style={styles.homeShortcutButtonText}>Explorar Meu Dashboard Home →</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -271,4 +286,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  homeShortcutButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1.2,
+    borderColor: '#EED6DC',
+  },
+  homeShortcutButtonText: {
+    color: Colors.textPrimary,
+    fontSize: 14.5,
+    fontWeight: '600',
+  },
 });
+
