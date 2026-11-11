@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { Colors } from '../constants/theme';
 import { api } from '../services/api';
+import { akashaStorage } from '../services/storage';
 
 export default function PlayerScreen() {
   const router = useRouter();
@@ -154,6 +155,13 @@ export default function PlayerScreen() {
   };
 
   const handleSaveManifested = () => {
+    if (manifestedNote.trim()) {
+      akashaStorage.addSynchronicity({
+        storyId,
+        storyTitle: title,
+        text: manifestedNote.trim(),
+      });
+    }
     setShowManifestedModal(false);
     setManifestedSuccess(true);
   };

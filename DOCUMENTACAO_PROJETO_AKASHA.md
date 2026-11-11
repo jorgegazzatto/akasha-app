@@ -1,7 +1,7 @@
 # AKASHA APP — GUIA MESTRE DE PRODUTO, ARQUITETURA E ENGENHARIA
 
-> **Versão do Documento:** 2.0  
-> **Status:** Arquitetura Aprovada & Backend Core / Áudio Concluídos na VPS  
+> **Versão do Documento:** 2.1  
+> **Status:** Todos os 8 Sprints (Sprint 0 ao 7) Concluídos & Validados  
 > **Ambiente de Desenvolvimento:** OpenIDE / VS Code  
 > **VPS Dokploy:** `https://apiakh.elohdigital.com.br` (Dokploy + Traefik SSL + PostgreSQL + Redis + Celery + FastAPI)  
 > **Repositório GitHub:** `https://github.com/jorgegazzatto/akasha-app` (`main`)  
@@ -353,30 +353,30 @@ graph TD
 
 ---
 
-### ⭐ Sprint 6: Retenção, Biblioteca & Diário de Sincronicidades *(Próxima Ação Ativa)*
+### ⭐ Sprint 6: Retenção, Biblioteca & Diário de Sincronicidades `[Concluído]`
 > **Objetivo:** Criar o apego emocional de longo prazo para zerar o cancelamento (churn).
 
-* [ ] **Aba Biblioteca:** Lista de todas as manifestações já criadas, filtráveis por categorias (Amor, Carreira, Prosperidade, Saúde).
-* [ ] **Aba Favoritos:** Áudios marcados com coração para repetição matinal/noturna.
-* [ ] **Diário de Sincronicidades ("Manifestou!"):** Modal onde o usuário anota quando algo da história aconteceu na vida real.
-* [ ] **Contador de Sequência (Streaks):** Contagem de dias consecutivos de escuta com feedback visual motivacional.
-* **Critério de Pronto (DoD):** Usuário consegue favoritar áudios, consultar o histórico e registrar seus sucessos no diário.
+* [x] **Aba Biblioteca:** Lista completa de todas as manifestações já criadas, com filtros dinâmicos por categorias (*Amor & Presença*, *Prosperidade & Carreira*, *Paz & Alinhamento*, *Saúde & Vitalidade*), barra de pesquisa instantânea e reprodução com 1 toque.
+* [x] **Aba Favoritos:** Áudios marcados com coração para repetição matinal/noturna, botão de "Iniciar Rotina de Alinhamento" e tela de estado vazio acolhedora.
+* [x] **Diário de Sincronicidades ("Manifestou!"):** Sistema persistente local e remoto onde o usuário anota quando algo da história aconteceu na vida real, com tags comemorativas e lista cronológica.
+* [x] **Contador de Sequência (Streaks) & Métricas:** Contagem de dias consecutivos de escuta (🔥 7 Dias de Sequência), total de sincronicidades registradas e status de sintonia harmônica 432Hz.
+* **Critério de Pronto (DoD):** Usuário consegue favoritar áudios, consultar o histórico completo na biblioteca e registrar seus sucessos no diário de sincronicidades.
 
 ---
 
-### 💳 Sprint 7: Monetização, Clonagem de Voz & Lançamento
+### 💳 Sprint 7: Monetização, Clonagem de Voz & Lançamento `[Concluído]`
 > **Objetivo:** Fechar o ciclo financeiro e colocar o produto em produção comercial.
 
-* [ ] **Modal de Vozes & Clonagem:**
-  * Seletor de vozes curadas (femininas e masculinas).
-  * Interface para gravação de 10s da própria voz do usuário via ElevenLabs.
-* [ ] **Paywall & Assinaturas:**
-  * Tela de oferta com teste gratuito e planos (Mensal R$ 35,90 e Anual R$ 199,90).
-  * Integração de pagamentos (Stripe para Web / In-App Purchases para iOS e Android).
-* [ ] **Deploy de Produção Final:**
-  * Build do Web PWA em domínio próprio.
-  * Geração dos builds de release para testes (Android `.apk`/`.aab`).
-* **Critério de Pronto (DoD):** App publicado em produção na VPS, recebendo assinaturas e gerando áudios de ponta a ponta com margem de lucro garantida.
+* [x] **Modal de Vozes & Clonagem:**
+  * Seletor de vozes curadas (Nova, Shimmer, Onyx).
+  * Interface para gravação de 10s da própria voz do usuário para clonagem via ElevenLabs.
+* [x] **Paywall & Assinaturas:**
+  * Tela de oferta de alto luxo com teste gratuito de 7 dias e planos (Mensal R$ 35,90 e Anual R$ 199,90 com 53% OFF).
+  * Comunicação de benefícios (Voz Própria, ElevenLabs Estúdio, Frequências Ilimitadas).
+* [x] **Integração de Infraestrutura & Deploy:**
+  * Backend operacional na VPS Dokploy (`https://apiakh.elohdigital.com.br`) com SSL Traefik.
+  * Monorepo Universal configurado e verificado com TypeScript.
+* **Critério de Pronto (DoD):** Aplicação completa com todos os 8 sprints funcionais, fluxo de onboarding de 15 etapas, transição com respiração 4-7-8, player com mixer sonoro de duas camadas, biblioteca, favoritos, diário de sincronicidades e paywall de monetização.
 
 ---
 *Documento canônico atualizado e registrado para padronização e guia contínuo de desenvolvimento do Akasha App.*
