@@ -510,40 +510,55 @@
   └── docker-compose.yml   # Orquestração completa da VPS (FastAPI, DB, Redis, Nginx)
     </div>
 
-    <h3>Roadmap de Execução Passo a Passo</h3>
+    <h3>Roadmap Canônico de Execução (8 Sprints)</h3>
     <table>
       <thead>
         <tr>
           <th>Fase</th>
           <th>Objetivo Principal</th>
-          <th>Entregáveis Concretos</th>
+          <th>Entregáveis Concretos & Status</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          <td><strong>Sprint 0</strong></td>
+          <td>Fundação & Infraestrutura</td>
+          <td>Setup monorepo, Docker Compose Dokploy na VPS com Traefik SSL (<code>apiakh.elohdigital.com.br</code>), PostgreSQL 16 e Redis 7. <span style="color:#2e7d32; font-weight:600;">(Concluído no Backend/VPS)</span></td>
+        </tr>
+        <tr>
           <td><strong>Sprint 1</strong></td>
-          <td>Fundação & Design System</td>
-          <td>Setup do Expo Universal, fontes serifadas/sans-serif, paleta e componentes base.</td>
+          <td>Design System & Onboarding</td>
+          <td>Expo Universal, 15 telas de profiling emocional, entrada de voz alternativa (STT) e pílulas de inspiração. <span style="color:#8c3a56; font-weight:600;">(Próxima Ação Ativa)</span></td>
         </tr>
         <tr>
           <td><strong>Sprint 2</strong></td>
-          <td>Onboarding com Entrada de Voz</td>
-          <td>Fluxo de 15 telas, microfone com gravação rápida e tela de respiração consciente.</td>
+          <td>Backend Core & Storyteller</td>
+          <td>Models PostgreSQL (users, profiles, stories), endpoints de perfil e orquestrador de roteiros em 1ª pessoa no presente em 3 atos. <span style="color:#2e7d32; font-weight:600;">(Concluído e Testado na VPS)</span></td>
         </tr>
         <tr>
           <td><strong>Sprint 3</strong></td>
-          <td>Backend VPS & Pipeline de Áudio</td>
-          <td>Docker Compose na VPS, orquestrador de roteiros e pós-produção FFmpeg.</td>
+          <td>Pipeline de Áudio & Estúdio</td>
+          <td>Smart Tiering (Free/Premium), masterização FFmpeg (Warm EQ + Reverb + 432Hz), Smart Cache SHA-256 e streaming HTTP 206. <span style="color:#2e7d32; font-weight:600;">(Concluído e Testado na VPS)</span></td>
         </tr>
         <tr>
           <td><strong>Sprint 4</strong></td>
-          <td>Home, Player Duplo & Retenção</td>
-          <td>Carrossel "For You", mixer sonoro de duas camadas, legendas dinâmicas e timer 24h.</td>
+          <td>Espera Mágica & Dashboard</td>
+          <td>Respiração guiada 4-7-8, narrativa progressiva, Prompt Hero diário, tags Trending e carrossel "For You" com timer 24h.</td>
         </tr>
         <tr>
           <td><strong>Sprint 5</strong></td>
-          <td>Monetização & Publicação</td>
-          <td>Clonagem de voz, Paywall com Google Play / App Store e Web PWA responsivo.</td>
+          <td>Player Imersivo & Mixer</td>
+          <td>Background audio playback, mixer sonoro duplo (Voz vs Trilha/432Hz) e legendas sincronizadas estilo karaokê.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 6</strong></td>
+          <td>Retenção & Diário de Sucesso</td>
+          <td>Aba Biblioteca categorizada, Favoritos com coração, Diário de Sincronicidades ("Manifestou!") e contador de Streaks.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 7</strong></td>
+          <td>Monetização & Lançamento</td>
+          <td>Clonagem de voz própria via ElevenLabs, Paywall de assinaturas recorrentes, Web App PWA e builds mobile para lançamento.</td>
         </tr>
       </tbody>
     </table>

@@ -1,8 +1,10 @@
 # AKASHA APP — GUIA MESTRE DE PRODUTO, ARQUITETURA E ENGENHARIA
 
-> **Versão do Documento:** 1.0  
-> **Status:** Arquitetura Aprovada & Pronta para Implementação  
+> **Versão do Documento:** 2.0  
+> **Status:** Arquitetura Aprovada & Backend Core / Áudio Concluídos na VPS  
 > **Ambiente de Desenvolvimento:** OpenIDE / VS Code  
+> **VPS Dokploy:** `https://apiakh.elohdigital.com.br` (Dokploy + Traefik SSL + PostgreSQL + Redis + Celery + FastAPI)  
+> **Repositório GitHub:** `https://github.com/jorgegazzatto/akasha-app` (`main`)  
 > **Classificação:** Guia Canônico do Projeto  
 
 ---
@@ -46,7 +48,7 @@ Enquanto a IA orquestra o roteiro e gera o áudio (~20-30s):
 ### 2.3 Dashboard Home & Core Retention Loop
 1. **Prompt Hero:** *"Jorge, o que você deseja manifestar hoje?"* com botão de envio rápido para gerar novas histórias sob demanda.
 2. **Trending Manifestations:** Tags em pílula com temas em alta (*"$10k weeks"*, *"Euro summer"*, *"Going viral"*).
-3. **Carrossel "For You":** Cards fotográficos verticais elegantes. Títulos gerados com as variáveis do onboarding (ex.: *"I watch Simone pour coffee on our farmhouse porch"*).
+3. **Carrossel "For You":** Cards fotográficos verticais elegantes. Títulos gerados com as variáveis do onboarding (ex.: *"Eu assisto Simone colocar café na varanda da nossa fazenda"*).
 4. **Mecânica de Retenção Diária (24h Refresh):** Contador regressivo no centro da tela (*"All stories refresh in 07:24:59"*), estimulando o usuário a ouvir diariamente antes da virada do ciclo.
 5. **Navegação Inferior em 4 Abas:**
    - 🏠 **Home:** Feed diário e prompt de criação.
@@ -74,91 +76,98 @@ Enquanto a IA orquestra o roteiro e gera o áudio (~20-30s):
                                     │ HTTPS / REST / WebSockets
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                       SUA VPS (DOCKER + NGINX)                         │
+│             SUA VPS (DOKPLOY + TRAEFIK SSL + DOCKER COMPOSE)           │
+│                    https://apiakh.elohdigital.com.br                   │
 │                                                                        │
-│   [ Nginx Reverse Proxy (SSL Certbot) ]                                │
+│   [ Traefik Proxy Reverso (SSL Let's Encrypt / Cloudflare) ]          │
 │                     │                                                  │
-│   [ API Backend (FastAPI / Python) ] ───► [ PostgreSQL (Banco) ]       │
-│                     │                                                  │
-│   [ Redis + Celery / RQ (Fila de Áudio) ]                              │
-│         │                  │                                           │
-│         ▼                  ▼                                           │
-│  [ FFmpeg Audio ]   [ Whisper / STT ]                                  │
-└─────────┬──────────────────┬───────────────────────────────────────────┘
-          │                  │
-          ▼                  ▼
+│   [ API Backend (FastAPI / Python 3.11 Async) ]                        │
+│         │                  │                      │                    │
+│         ▼                  ▼                      ▼                    │
+│  [ PostgreSQL 16 ]   [ Redis 7 + Celery ]   [ FFmpeg Studio Engine ]  │
+│  (Persistência DB)   (Filas Assíncronas)    (Warm EQ + 432Hz + Reverb) │
+└─────────┬──────────────────┬──────────────────────┬────────────────────┘
+          │                  │                      │
+          ▼                  ▼                      ▼
 ┌──────────────────┐  ┌─────────────────────┐  ┌────────────────────────┐
-│   OPENAI / GEMINI│  │    ELEVENLABS API   │  │  CLOUDFLARE R2 / S3    │
-│  (Roteiro em 1ªP)│  │ (Vozes & Clonagem)  │  │(Streaming CDN de MP3)  │
+│   OPENAI / GEMINI│  │    ELEVENLABS API   │  │  CLOUDFLARE R2 / CDN   │
+│  (Roteiro em 1ªP)│  │ (Vozes & Clonagem)  │  │(Streaming HTTP 206 MP3)│
 └──────────────────┘  └─────────────────────┘  └────────────────────────┘
 ```
 
 ### 3.1 Frontend Universal (Código Único)
-- **Tecnologia:** **React Native com Expo (Expo Router + Web)**.
-- **Vantagem Estratégica:** Uma única base de código em TypeScript que roda nativamente no iOS, Android e no Navegador Desktop/Tablet como Web App Responsivo (PWA).
-- **Reprodução em Segundo Plano:** Utilização de `react-native-track-player` ou `expo-av` para manter a reprodução ativa com a tela do celular apagada ou trocando de aba no PC.
+- **Tecnologia:** **React Native com Expo (Expo Router + Web)** com TypeScript.
+- **Vantagem Estratégica:** Uma única base de código atende **PC (Web PWA), Tablet e Mobile (iOS e Android)**.
+- **Reprodução em Segundo Plano:** Background audio playback ativo mesmo com tela apagada ou alternando abas.
 
-### 3.2 Backend na VPS (Sua Infraestrutura Privada)
-- **Tecnologia:** **Python (FastAPI)** conteinerizado via Docker Compose.
-- **Serviços na VPS:**
-  1. `api`: FastAPI assíncrono (validações, endpoints de perfil, streaming e auth).
-  2. `worker`: Processamento assíncrono de geração de áudios pesados sem travar as requisições do usuário.
-  3. `redis`: Fila de tarefas para o worker.
-  4. `db`: PostgreSQL para persistência de dados.
-  5. `nginx`: Proxy reverso gerenciando certificados SSL Let's Encrypt automaticamente.
+### 3.2 Backend na VPS Privada
+- **Ambiente:** Servidor VPS Dokploy sob domínio `apiakh.elohdigital.com.br`.
+- **Containers Ativos & Isolados:**
+  1. `akasha_backend`: FastAPI assíncrono (Python 3.11, SQLAlchemy async, Pydantic v2).
+  2. `akasha_worker`: Celery worker para processamento em background de áudio e síntese.
+  3. `akasha_postgres`: PostgreSQL 16 com persistência em volume seguro.
+  4. `akasha_redis`: Redis 7 para mensageria e cache veloz.
 
 ### 3.3 Storage e Distribuição de Áudio (Proteção da VPS)
-- Os arquivos `.mp3` pós-processados são enviados automaticamente para **Cloudflare R2** (armazenamento compatível com S3 com **custo zero de egress/tráfego de rede**).
-- Os clientes (Web/Mobile) fazem o streaming diretamente pela CDN da Cloudflare, mantendo a largura de banda da sua VPS 100% livre.
+- Suporte a streaming com chunks HTTP 206 (`Accept-Ranges: bytes`).
+- Arquivos `.mp3` pós-processados integráveis ao **Cloudflare R2** com taxa zero de egress/tráfego, mantendo a largura de banda da VPS preservada.
 
 ---
 
-## 4. ESTRATÉGIA HÍBRIDA DE VOZ & ECONOMIA UNITÁRIA (UNIT ECONOMICS)
+## 4. ESTRATÉGIA HÍBRIDA INTELIGENTE DE ÁUDIO (SMART TIERING)
 
-Para garantir **máximo realismo emocional com custo operacional mínimo**, adota-se a arquitetura de **Vozes em 3 Camadas**:
+Para proteger o fluxo de caixa, blindar a operação contra surpresas de API e entregar uma experiência acústica emocionante e cinematográfica desde o dia 1:
 
-### 4.1 Camada 1: Custo Otimizado para Entrada e Escala
-- **Motores:** **OpenAI TTS-1-HD** (vozes `nova`, `shimmer`, `onyx`) ou **ElevenLabs Flash v2.5** / **Google Journey**.
-- **Custo Médio:** ~US$ 0,07 (~R$ 0,40) por história de 3 minutos (2.500 caracteres).
-- **Aplicação:** Utilizado nas histórias do onboarding gratuito, no feed padrão diário e nos testes.
+### 4.1 Camada Gratuita & Onboarding
+- **Motores:** **OpenAI TTS-1-HD** (vozes curadas `nova`, `shimmer`, `onyx`, `alloy`) ou **ElevenLabs Flash v2.5**.
+- **Custo Operacional:** Na casa dos **centavos por usuário** (~R$ 0,35 a R$ 0,40 por história de 3 minutos).
+- **Pós-Produção Acústica no Backend (FFmpeg):** O áudio sintetizado passa imediatamente pela masterização automática do servidor:
+  1. **Warm EQ:** Realce suave de calor nas frequências graves e médias-baixas (+2.5dB em 200Hz) para sensação de proximidade auricular íntima.
+  2. **Reverb Suave:** Adição de espacialidade de sala para remover a aridez digital sintética.
+  3. **Camada Harmônica 432Hz:** Síntese e fusão de onda senoidal contínua na frequência 432Hz (cura mental / alinhamento alfa), mixada suavemente sob a locução.
+- **Resultado:** O usuário experimenta arrepios e profundo impacto emocional logo na primeira escuta sem onerar o projeto.
 
-### 4.2 Camada 2: O Tratamento de Estúdio no Backend (FFmpeg)
-Para evitar que a voz soe sintética ou mecânica, o backend aplica um pipeline de pós-produção em Python/FFmpeg:
-1. **Equalização Warm:** Realce de frequências baixas (150-250Hz) para sensação de intimidade e proximidade auricular.
-2. **Reverb de Sala Suave:** Elimina a aridez do áudio digital.
-3. **Masterização com Trilha Subliminar:** Inserção em volume calibrado da frequência harmônica (432Hz) sob a fala.
-*Resultado:* Uma voz econômica soa com qualidade idêntica a produções profissionais de estúdio.
+### 4.2 Camada Premium (Assinantes)
+- **Vozes de Estúdio Exclusivas:** Catálogo expandido com vozes expressivas ultra-realistas (ElevenLabs Multilingual v2).
+- **Clonagem de Voz Própria (Voice Clone):**
+  - O usuário grava 10 segundos da sua voz pelo próprio aplicativo.
+  - A clonagem via ElevenLabs é acionada sob demanda exclusivamente para assinantes pagantes.
+  - **Margem de Lucro Segura:** A assinatura mensal (R$ 35,90) ou anual (R$ 199,90) cobre com ampla folga as requisições de clonagem, garantindo margem líquida elevada e previsibilidade financeira.
 
-### 4.3 Camada 3: Premium & Clonagem de Voz
-- **Motor:** **ElevenLabs Voice Cloning & Multilingual v2**.
-- **Aplicação:** Exclusivo para assinantes pagantes que gravam 10 segundos da própria voz.
-- **Viabilidade:** O valor da assinatura mensal (R$ 35,90) cobre com ampla margem o custo de clonagem e gerações personalizadas do assinante.
-
-### 4.4 Cache de Manifestações Populares
-Histórias da aba *Trending* com temas universais são geradas uma única vez e servidas a milhares de usuários via cache de CDN, com custo de IA próximo de zero.
+### 4.3 Cache Inteligente de Áudio (Smart Cache SHA-256)
+- **Manifestações Populares (Aba Trending):** Temas universais (ex.: *"Semana de US$ 10k"*, *"Paz interior matinal"*, *"Despertar da Prosperidade"*) que utilizam narrativas neutras são geradas uma única vez e cacheadas na CDN.
+- **Custo de Geração:** Pago uma única vez para milhares de reproduções gratuitas subsequentes.
+- **Cache Determinístico Local & CDN:** O backend gera uma assinatura hash SHA-256 única baseada no texto, voz, tom e frequência. Se os mesmos parâmetros forem requisitados novamente, o arquivo em cache é entregue em **menos de 0.2 segundos com 0% de custo de API**.
 
 ---
 
-## 5. MODELO DE DADOS CONCEITUAL (POSTGRESQL)
+## 5. MODELO DE DADOS CONCEITUAL (POSTGRESQL 16)
 
 ```sql
 -- Tabela de Usuários
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(150),
+    is_active BOOLEAN DEFAULT TRUE,
+    is_superuser BOOLEAN DEFAULT FALSE,
+    subscription_tier VARCHAR(50) DEFAULT 'free', -- 'free', 'trial', 'premium'
+    voice_clone_id VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    subscription_status VARCHAR(50) DEFAULT 'free' -- 'free', 'trial', 'premium'
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Perfil Detalhado do Onboarding
+-- Perfil Detalhado do Onboarding (5 Dimensões Emocionais)
 CREATE TABLE user_profiles (
-    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    identity_name VARCHAR(100) NOT NULL,
     gender VARCHAR(50),
     sexuality VARCHAR(50),
     age INT,
     has_kids BOOLEAN,
-    occupation TEXT,
+    occupation VARCHAR(200),
     career_sentiment TEXT,
     personal_description TEXT,
     past_defining_moment TEXT,
@@ -166,35 +175,41 @@ CREATE TABLE user_profiles (
     relationship_status VARCHAR(50),
     partner_name VARCHAR(100),
     partner_qualities TEXT,
-    dream_cities TEXT[],
+    dream_cities JSONB,
     dream_home_type VARCHAR(100),
-    core_values TEXT[],
+    core_values JSONB,
+    raw_profile_data JSONB,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Histórias de Manifestação
-CREATE TABLE manifestation_stories (
+-- Histórias de Manifestação em 3 Atos
+CREATE TABLE stories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     category VARCHAR(100),
     script_text TEXT NOT NULL,
-    audio_url TEXT NOT NULL,
+    act_1_anchoring TEXT,
+    act_2_manifestation TEXT,
+    act_3_gratitude TEXT,
+    audio_url VARCHAR(500),
     duration_seconds INT DEFAULT 180,
-    cover_image_url TEXT,
+    cover_image_url VARCHAR(500),
     voice_used VARCHAR(50),
     ambient_track VARCHAR(50),
     is_favorite BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Diário de Sincronicidades ("Manifestou!")
-CREATE TABLE synchronicity_logs (
+-- Sessões de Áudio e Telemetria de Retenção
+CREATE TABLE audio_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    story_id UUID REFERENCES manifestation_stories(id),
-    notes TEXT NOT NULL,
-    logged_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    story_id UUID NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    played_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completion_rate FLOAT DEFAULT 0.0,
+    voice_volume FLOAT DEFAULT 1.0,
+    ambient_volume FLOAT DEFAULT 0.5
 );
 ```
 
@@ -207,7 +222,10 @@ Você é o roteirista mestre do Akasha App. Sua missão é escrever uma narrativ
 
 DIRETRIZES FUNDAMENTAIS:
 1. Tom: Sereno, sensorial, íntimo, empoderador, sem clichês vazios.
-2. Formato: Narrativa contínua dividida em 3 atos (Ancoragem no ambiente -> O acontecimento da realização -> Gratidão profunda).
+2. Formato: Narrativa contínua dividida em 3 atos:
+   - Ato 1 (Ancoragem no Ambiente): Estabelece o cenário sensorial vívido.
+   - Ato 2 (O Acontecimento da Realização): O clímax da vivência manifestada com a pessoa amada e objetivos.
+   - Ato 3 (Gratidão Profunda & Integração): O alívio de já viver essa realidade agora.
 3. Dados do Usuário: Integre com naturalidade os dados do perfil fornecidos (Nome da pessoa amada: {partner_name}, Lar dos sonhos: {dream_home_type}, Cidade: {dream_city}).
 4. Transmutação: Aborde sutilmente o desafio superado ({current_struggle}) mostrando o alívio e a conquista do estado atual.
 5. Extensão: Entre 350 e 450 palavras (ideal para ~3 minutos de leitura pausada).
@@ -216,34 +234,137 @@ DIRETRIZES FUNDAMENTAIS:
 
 ---
 
-## 7. ROADMAP DE DESENVOLVIMENTO (SPRINTS NO OPENIDE)
+## 7. ROADMAP CANÔNICO DE DESENVOLVIMENTO (8 SPRINTS)
 
-### Sprint 1: Fundação & Design System
-- [ ] Inicialização do projeto **Expo Universal** com TypeScript.
-- [ ] Configuração do Tailwind / NativeWind com a paleta e fontes do Akasha.
-- [ ] Construção dos componentes base (Botões, Cards, Inputs, Pílulas).
+O desenvolvimento do Akasha App é estruturado em **8 Sprints incrementais** (Sprint 0 até Sprint 7), onde cada sprint entrega valor funcional testável de ponta a ponta:
 
-### Sprint 2: Onboarding Conversacional & Entrada de Voz
-- [ ] Telas do Onboarding sequencial (1 tela por pergunta).
-- [ ] Componente de gravação de áudio com microfone para transcrição automática.
-- [ ] Tela de transição com esfera de respiração guiada (4-7-8).
-
-### Sprint 3: Backend na VPS & Pipeline de Áudio
-- [ ] Configuração do Docker Compose na VPS (FastAPI, Redis, PostgreSQL).
-- [ ] Endpoint de orquestração do LLM para geração do roteiro em 1ª pessoa.
-- [ ] Integração do sintetizador de voz + pós-produção FFmpeg (EQ Warm + 432Hz).
-- [ ] Upload automático dos áudios no Cloudflare R2 / CDN.
-
-### Sprint 4: Dashboard, Player Imersivo & Biblioteca
-- [ ] Home com carrossel dinâmico "For You", prompt hero e timer de 24h.
-- [ ] Player multimídia com controle de duas camadas (Voz + Fundo Ambiente).
-- [ ] Legendas sincronizadas na tela.
-- [ ] Abas de Biblioteca, Favoritos e Diário de Sincronicidades.
-
-### Sprint 5: Monetização, Clonagem de Voz & Lançamento
-- [ ] Modal de vozes e funcionalidade de gravação para clonagem de voz.
-- [ ] Paywall e integração com pagamentos recorrentes (Stripe / Google Play / App Store).
-- [ ] Deploy do Web App PWA e build das versões mobile (Android APK/AAB e iOS).
+```mermaid
+graph TD
+    S0["Sprint 0: Setup & Fundação<br>(Repo + Expo + VPS Dokploy Docker)"] --> S1["Sprint 1: Design System & Onboarding<br>(15 Telas + Entrada de Voz STT)"]
+    S1 --> S2["Sprint 2: Backend & Orquestrador de IA<br>(FastAPI + PostgreSQL + Prompt Storyteller)"]
+    S2 --> S3["Sprint 3: Pipeline de Áudio & Estúdio<br>(Smart Tiering + FFmpeg 432Hz + Streaming)"]
+    S3 --> S4["Sprint 4: Home & Retenção 24h<br>(Prompt Hero + Carrossel 'For You' + Timer)"]
+    S4 --> S5["Sprint 5: Player Imersivo & Mixer<br>(Mixer Duplo + Legendas Sincronizadas)"]
+    S5 --> S6["Sprint 6: Biblioteca & Diário de Sincronicidades<br>(Favoritos + 'Manifestou!' + Streaks)"]
+    S6 --> S7["Sprint 7: Monetização, Clonagem & Deploy<br>(Paywall + Clonagem de Voz + Releases)"]
+```
 
 ---
-*Documento registrado para padronização e guia contínuo de desenvolvimento do Akasha App.*
+
+### 📦 Sprint 0: Fundação, Monorepo & Infraestrutura Base
+> **Objetivo:** Ter o ambiente local no OpenIDE e o ambiente remoto na VPS 100% integrados e rodando com comunicação segura e SSL.
+
+* [x] Estruturação do repositório (`/frontend` e `/backend`).
+* [x] Repositório oficial configurado no GitHub: `https://github.com/jorgegazzatto/akasha-app`.
+* [x] Setup do `docker-compose.yml` e Dokploy na VPS (`136.248.82.204`).
+* [x] Configuração de rede `dokploy-network` e proxy reverso Traefik com SSL automático Let's Encrypt.
+* [x] Domínio de produção ativo: `https://apiakh.elohdigital.com.br`.
+* [x] Banco de dados PostgreSQL 16 e Redis 7 inicializados e operacionais em container.
+* [ ] Setup do **Expo Universal (React Native + Web)** com TypeScript no frontend.
+* [ ] Configuração do **NativeWind / Tailwind** com a paleta do Akasha (tons rosa quartzo, champanhe, vinho profundo).
+* [ ] Instalação das fontes personalizadas (*Playfair Display* e *Plus Jakarta Sans*).
+* **Critério de Pronto (DoD):** Backend rodando na VPS com SSL, respondendo `/api/v1/health` e integrado ao banco de dados e fila Redis.
+
+---
+
+### 🌸 Sprint 1: Design System & Onboarding Psicológico *(Próxima Ação Ativa)*
+> **Objetivo:** Construir toda a jornada inicial que o usuário percorre, com design de alto luxo e sem fadiga de digitação.
+
+* [ ] Componentes base reutilizáveis: Botão Pílula, Campo de Texto com Envio `↑`, Barra de Progresso no topo.
+* [ ] Fluxo sequencial de telas:
+  * Boas-vindas com moodboard visual e colagens.
+  * Coleta de Identidade: Nome, Gênero, Orientação, Idade, Filhos.
+  * Carreira & Sentimento profissional.
+  * Relações Afetivas: Nome da pessoa amada (*Simone*) e qualidades admiradas.
+  * O Sonho: Cidades desejadas, estilo de casa (*Farmhouse, Penthouse*), valores centrais.
+* [ ] **Entrada de Voz Alternativa:** Botão de microfone para o usuário falar em vez de digitar em perguntas profundas.
+* [ ] **Pílulas de Inspiração:** Sugestões clicáveis para quebrar o bloqueio criativo.
+* **Critério de Pronto (DoD):** Usuário consegue completar todo o fluxo pelo PC ou celular de forma fluida, salvando o estado das respostas localmente e enviando ao backend.
+
+---
+
+### 🧠 Sprint 2: Backend Core & Orquestrador de IA
+> **Objetivo:** Criar a inteligência que transforma os dados do usuário em um roteiro poético em 1ª pessoa no presente em 3 atos.
+
+* [x] Modelagem do banco PostgreSQL (Tabelas `users`, `user_profiles`, `stories`, `audio_sessions`).
+* [x] Endpoints de Usuário e Perfil do Onboarding (`POST /api/v1/users/`, `POST /api/v1/users/{id}/profile`, `GET /api/v1/users/{id}/profile`).
+* [x] Implementação do **Prompt Master do Storyteller** sensorial em 1ª pessoa do presente dividido em 3 atos (Ancoragem, Manifestação, Gratidão).
+* [x] Endpoint de orquestração do roteiro (`POST /api/v1/stories/generate/{user_id}`).
+* [ ] **Engine de Transcrição (STT):** Endpoint para receber os áudios do microfone do onboarding e transcrever via Whisper.
+* **Critério de Pronto (DoD):** Ao enviar os dados do perfil, o backend retorna um roteiro emocionante e hiperpersonalizado em menos de 3 segundos. *(Testado e validado com sucesso na VPS).*
+
+---
+
+### 🎧 Sprint 3: Pipeline de Áudio Híbrido & Pós-Produção no Backend
+> **Objetivo:** Gerar voz humana ultra-realista de baixo custo com tratamento profissional de estúdio.
+
+* [x] Arquitetura de Smart Tiering implementada (`SmartAudioService`):
+  * Camada Free: OpenAI TTS-1 / ElevenLabs Flash.
+  * Camada Premium: ElevenLabs Multilingual v2 e suporte a clonagem de voz.
+* [x] **Script de Pós-Produção com FFmpeg (Python):**
+  * Aplicação de Warm EQ (+2.5dB a 200Hz).
+  * Reverb suave de ambiente.
+  * Síntese harmônica e mixagem da frequência 432Hz sob a locução.
+* [x] **Smart Audio Cache (SHA-256):** Reutilização imediata de áudios repetidos em 0.19s com 0% custo de API.
+* [x] Endpoint de streaming de áudio com suporte a chunks HTTP 206 (`GET /api/v1/audio/stream/{filename}`).
+* [x] Worker assíncrono com Celery e Redis na VPS.
+* [ ] Upload automático do `.mp3` final para o **Cloudflare R2** com geração de URL pública CDN.
+* **Critério de Pronto (DoD):** O backend recebe um texto, sintetiza a voz, trata o áudio e entrega streaming com qualidade de estúdio e latência instantânea no cache. *(Testado e validado com sucesso na VPS).*
+
+---
+
+### 🏠 Sprint 4: Tela de Espera Mágica & Dashboard Home
+> **Objetivo:** Conectar a conclusão do onboarding com o impacto do primeiro card na Home e o loop diário.
+
+* [ ] **Tela de Transição "Generating your stories...":**
+  * Esfera de Respiração Consciente (técnica 4-7-8).
+  * Feedback narrativo progressivo (*"Desenhando seu refúgio na fazenda..."*).
+* [ ] **Dashboard Home (PC, Tablet e Celular):**
+  * Prompt Hero: *"{nome}, o que você quer manifestar hoje?"* com atalho de geração sob demanda.
+  * Tags de Tendências (*Trending Manifestations*).
+  * **Carrossel "For You":** Cards visuais verticais com fotos estéticas e títulos em 1ª pessoa no presente.
+  * **Temporizador Diário (24h Refresh):** Relógio regressivo (*"All stories refresh in 07:24:59"*).
+* **Critério de Pronto (DoD):** O usuário sai do onboarding, respira durante o loading e cai na Home vendo seus cards personalizados gerados para ele.
+
+---
+
+### 🎶 Sprint 5: Player de Áudio Imersivo & Mixer Sonoro
+> **Objetivo:** O coração do app — onde o usuário escuta e vivencia sua manifestação.
+
+* [ ] Suporte a **Background Audio Playback** (continua tocando com a tela apagada no celular ou trocando de aba no PC).
+* [ ] **Mixer de Áudio com Duas Camadas:**
+  * Slider 1: Volume da Voz.
+  * Slider 2: Volume do Ambiente (Chuva, Lareira, Ondas do mar ou Frequências 432Hz/528Hz).
+* [ ] **Legendas Sincronizadas (Estilo Karaokê):** As frases se iluminam à medida que a voz avança.
+* [ ] Visualizador de Aura pulsante e relaxante na tela do player.
+* **Critério de Pronto (DoD):** Player tocando perfeitamente em segundo plano, com legendas fluindo e controle independente dos volumes de voz e chuva/frequência.
+
+---
+
+### ⭐ Sprint 6: Retenção, Biblioteca & Diário de Sincronicidades
+> **Objetivo:** Criar o apego emocional de longo prazo para zerar o cancelamento (churn).
+
+* [ ] **Aba Biblioteca:** Lista de todas as manifestações já criadas, filtráveis por categorias (Amor, Carreira, Prosperidade, Saúde).
+* [ ] **Aba Favoritos:** Áudios marcados com coração para repetição matinal/noturna.
+* [ ] **Diário de Sincronicidades ("Manifestou!"):** Modal onde o usuário anota quando algo da história aconteceu na vida real.
+* [ ] **Contador de Sequência (Streaks):** Contagem de dias consecutivos de escuta com feedback visual motivacional.
+* **Critério de Pronto (DoD):** Usuário consegue favoritar áudios, consultar o histórico e registrar seus sucessos no diário.
+
+---
+
+### 💳 Sprint 7: Monetização, Clonagem de Voz & Lançamento
+> **Objetivo:** Fechar o ciclo financeiro e colocar o produto em produção comercial.
+
+* [ ] **Modal de Vozes & Clonagem:**
+  * Seletor de vozes curadas (femininas e masculinas).
+  * Interface para gravação de 10s da própria voz do usuário via ElevenLabs.
+* [ ] **Paywall & Assinaturas:**
+  * Tela de oferta com teste gratuito e planos (Mensal R$ 35,90 e Anual R$ 199,90).
+  * Integração de pagamentos (Stripe para Web / In-App Purchases para iOS e Android).
+* [ ] **Deploy de Produção Final:**
+  * Build do Web PWA em domínio próprio.
+  * Geração dos builds de release para testes (Android `.apk`/`.aab`).
+* **Critério de Pronto (DoD):** App publicado em produção na VPS, recebendo assinaturas e gerando áudios de ponta a ponta com margem de lucro garantida.
+
+---
+*Documento canônico atualizado e registrado para padronização e guia contínuo de desenvolvimento do Akasha App.*
