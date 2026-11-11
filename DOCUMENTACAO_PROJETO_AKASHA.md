@@ -260,30 +260,37 @@ graph TD
 * [x] Configuração de rede `dokploy-network` e proxy reverso Traefik com SSL automático Let's Encrypt.
 * [x] Domínio de produção ativo: `https://apiakh.elohdigital.com.br`.
 * [x] Banco de dados PostgreSQL 16 e Redis 7 inicializados e operacionais em container.
-* [ ] Setup do **Expo Universal (React Native + Web)** com TypeScript no frontend.
-* [ ] Configuração do **NativeWind / Tailwind** com a paleta do Akasha (tons rosa quartzo, champanhe, vinho profundo).
-* [ ] Instalação das fontes personalizadas (*Playfair Display* e *Plus Jakarta Sans*).
+* [x] Setup do **Expo Universal (React Native + Web)** com TypeScript no frontend.
+* [x] Configuração de tema e paleta do Akasha (tons rosa quartzo, champanhe, vinho profundo).
+* [x] Tipografia e fontes (*Playfair Display* e *Plus Jakarta Sans / System*).
 * **Critério de Pronto (DoD):** Backend rodando na VPS com SSL, respondendo `/api/v1/health` e integrado ao banco de dados e fila Redis.
 
 ---
 
-### 🌸 Sprint 1: Design System & Onboarding Psicológico *(Próxima Ação Ativa)*
+### 🌸 Sprint 1: Design System & Onboarding Psicológico `[Concluído]`
 > **Objetivo:** Construir toda a jornada inicial que o usuário percorre, com design de alto luxo e sem fadiga de digitação.
 
-* [ ] Componentes base reutilizáveis: Botão Pílula, Campo de Texto com Envio `↑`, Barra de Progresso no topo.
-* [ ] Fluxo sequencial de telas:
-  * Boas-vindas com moodboard visual e colagens.
-  * Coleta de Identidade: Nome, Gênero, Orientação, Idade, Filhos.
-  * Carreira & Sentimento profissional.
-  * Relações Afetivas: Nome da pessoa amada (*Simone*) e qualidades admiradas.
-  * O Sonho: Cidades desejadas, estilo de casa (*Farmhouse, Penthouse*), valores centrais.
-* [ ] **Entrada de Voz Alternativa:** Botão de microfone para o usuário falar em vez de digitar em perguntas profundas.
-* [ ] **Pílulas de Inspiração:** Sugestões clicáveis para quebrar o bloqueio criativo.
-* **Critério de Pronto (DoD):** Usuário consegue completar todo o fluxo pelo PC ou celular de forma fluida, salvando o estado das respostas localmente e enviando ao backend.
+* [x] Componentes base reutilizáveis:
+  * `PillButton`: Botão pílula com estados selecionado/padrão e sombras suaves.
+  * `VoiceInputField`: Campo de texto com envio `→` e botão de microfone com animação pulsante, gravação e timer.
+  * `ProgressBar`: Barra de progresso do onboarding com contador de etapas (1 a 15) e botão de retorno.
+  * `InspirationPills`: Pílulas clicáveis de sugestões para quebrar o bloqueio criativo do usuário.
+* [x] Fluxo sequencial de 15 telas do profiling emocional (5 dimensões):
+  * **Identidade:** Nome (Etapa 1), Boas-vindas personalizadas (Etapa 2), Gênero (Etapa 3), Orientação (Etapa 4), Faixa etária (Etapa 5), Filhos (Etapa 6).
+  * **Carreira:** Ocupação com inspirações (Etapa 7), Sentimento profissional (Etapa 8).
+  * **Conflito & Resiliência:** Autodescrição aberta com voz (Etapa 9), Momento marcante de superação (Etapa 10), Desafio atual a transmutar (Etapa 11).
+  * **Coadjuvantes Afetivos:** Status amoroso (Etapa 12), Pessoa amada (*Simone*) e qualidades admiradas (Etapa 13).
+  * **O Sonho Manifestado:** Cidades dos sonhos em seleção múltipla (Etapa 14), Estilo de lar e valores centrais de vida (Etapa 15).
+* [x] **Entrada de Voz Alternativa:** Integrada nas perguntas profundas para gravação natural de pensamentos.
+* [x] **Pílulas de Inspiração:** Disponíveis em todas as etapas abertas de carreira, conflito e afeto.
+* [x] **Integração com Backend na VPS:** Cliente `api.ts` que cria usuário e persiste o perfil completo em `POST /api/v1/users/{id}/profile`.
+* [x] **Tela de Espera Mágica (`transition.tsx`):** Esfera de meditação guiada (4-7-8) com feedback narrativo em 4 fases e disparo de `POST /api/v1/stories/generate/{id}`.
+* [x] **Player Imersivo (`player.tsx`):** Mixer sonoro duplo (Voz vs Frequência 432Hz), legendas sincronizadas e botão *"Manifestou!"*.
+* **Critério de Pronto (DoD):** Usuário completa o onboarding pelo PC ou celular de forma fluida, o perfil é salvo no PostgreSQL na VPS e a transição conduz diretamente ao player imersivo.
 
 ---
 
-### 🧠 Sprint 2: Backend Core & Orquestrador de IA
+### 🧠 Sprint 2: Backend Core & Orquestrador de IA `[Concluído e Testado na VPS]`
 > **Objetivo:** Criar a inteligência que transforma os dados do usuário em um roteiro poético em 1ª pessoa no presente em 3 atos.
 
 * [x] Modelagem do banco PostgreSQL (Tabelas `users`, `user_profiles`, `stories`, `audio_sessions`).
@@ -295,7 +302,7 @@ graph TD
 
 ---
 
-### 🎧 Sprint 3: Pipeline de Áudio Híbrido & Pós-Produção no Backend
+### 🎧 Sprint 3: Pipeline de Áudio Híbrido & Pós-Produção no Backend `[Concluído e Testado na VPS]`
 > **Objetivo:** Gerar voz humana ultra-realista de baixo custo com tratamento profissional de estúdio.
 
 * [x] Arquitetura de Smart Tiering implementada (`SmartAudioService`):
@@ -313,7 +320,7 @@ graph TD
 
 ---
 
-### 🏠 Sprint 4: Tela de Espera Mágica & Dashboard Home
+### 🏠 Sprint 4: Tela de Espera Mágica & Dashboard Home *(Próxima Ação Ativa)*
 > **Objetivo:** Conectar a conclusão do onboarding com o impacto do primeiro card na Home e o loop diário.
 
 * [ ] **Tela de Transição "Generating your stories...":**
