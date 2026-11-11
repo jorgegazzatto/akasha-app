@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Akasha App - Guia Canônico e Relatório Técnico</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+    @page {
+      size: A4;
+      margin: 16mm 14mm 16mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 8pt;
+        color: #8c727a;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #2b1f24;
+      background-color: #ffffff;
+      line-height: 1.5;
+      font-size: 9.5pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    .page {
+      page-break-after: always;
+      position: relative;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    /* CAPA */
+    .cover {
+      min-height: 250mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28mm 16mm 18mm 16mm;
+      background: linear-gradient(145deg, #fdf8f9 0%, #fbeff2 50%, #f7dbe3 100%);
+      border-radius: 12px;
+      border: 1px solid #eed6dc;
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-badge {
+      font-size: 10.5pt;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #8c3a56;
+      background: #ffffff;
+      padding: 6px 16px;
+      border-radius: 50px;
+      border: 1px solid #eed6dc;
+    }
+
+    .cover-center {
+      margin-top: 30mm;
+      margin-bottom: 20mm;
+    }
+
+    .cover-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 34pt;
+      line-height: 1.15;
+      color: #38121f;
+      margin: 0 0 16px 0;
+      font-weight: 700;
+    }
+
+    .cover-title span {
+      font-style: italic;
+      color: #993d5c;
+    }
+
+    .cover-subtitle {
+      font-size: 13pt;
+      line-height: 1.45;
+      color: #5e434e;
+      max-width: 600px;
+      margin-bottom: 24px;
+    }
+
+    .cover-divider {
+      width: 70px;
+      height: 3px;
+      background: #c2597b;
+      border-radius: 2px;
+      margin-bottom: 25px;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #f0d8de;
+    }
+
+    .cover-meta-item strong {
+      display: block;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8c3a56;
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-item span {
+      font-size: 9pt;
+      color: #2b1f24;
+      font-weight: 600;
+    }
+
+    /* TITULOS & TEXTOS */
+    h1, h2, h3, h4 {
+      font-family: 'Playfair Display', serif;
+      color: #38121f;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 16pt;
+      border-bottom: 2px solid #f4dbe2;
+      padding-bottom: 5px;
+      margin-top: 10pt;
+      margin-bottom: 10pt;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h2 .section-num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 8.5pt;
+      background: #c2597b;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      margin-top: 10pt;
+      margin-bottom: 5pt;
+      color: #632238;
+    }
+
+    p {
+      margin: 0 0 7pt 0;
+      color: #3d2f35;
+      text-align: justify;
+    }
+
+    /* CARDS */
+    .highlight-box {
+      background: #fdf5f7;
+      border-left: 4px solid #c2597b;
+      padding: 9pt 11pt;
+      border-radius: 0 8px 8px 0;
+      margin: 8pt 0;
+    }
+
+    .card-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9pt;
+      margin: 8pt 0;
+    }
+
+    .card-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7pt;
+      margin: 8pt 0;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border: 1px solid #ebd3da;
+      border-radius: 8px;
+      padding: 8pt 10pt;
+      box-shadow: 0 2px 4px rgba(74, 21, 37, 0.02);
+    }
+
+    .feature-card h4 {
+      font-size: 10pt;
+      margin: 0 0 3pt 0;
+      color: #8c3a56;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+    }
+
+    .feature-card p {
+      font-size: 8.5pt;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* TABELAS */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8pt 0;
+      font-size: 8.5pt;
+    }
+
+    th {
+      background: #8c3a56;
+      color: #ffffff;
+      font-weight: 600;
+      text-align: left;
+      padding: 5pt 7pt;
+      border: 1px solid #7d334c;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    td {
+      padding: 5pt 7pt;
+      border: 1px solid #ebd3da;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fdf8f9;
+    }
+
+    .pill {
+      display: inline-block;
+      background: #f4dbe2;
+      color: #722740;
+      font-size: 7.5pt;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+
+    .pill-green {
+      background: #e6f4ea;
+      color: #137333;
+    }
+
+    .pill-blue {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+
+    .quote-card {
+      background: linear-gradient(135deg, #fffafa 0%, #faedf1 100%);
+      border: 1px dashed #dca5b6;
+      border-radius: 8px;
+      padding: 8pt 12pt;
+      margin: 8pt 0;
+      font-style: italic;
+      font-family: 'Playfair Display', serif;
+      font-size: 10pt;
+      color: #4a1c2c;
+      text-align: center;
+    }
+
+    .arch-diagram {
+      background: #2b1720;
+      color: #fcecef;
+      padding: 10pt;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 7.8pt;
+      line-height: 1.35;
+      margin: 8pt 0;
+      white-space: pre-wrap;
+    }
+
+    .footer-note {
+      font-size: 7.5pt;
+      color: #9e7f89;
+      text-align: center;
+      margin-top: 12pt;
+      border-top: 1px solid #f2dae1;
+      padding-top: 5pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PÁGINA 1: CAPA -->
+  <div class="page">
+    <div class="cover">
+      <div class="cover-top">
+        <div class="brand-badge">PROJETO AKASHA</div>
+        <div style="font-size: 8.5pt; color: #8c3a56; font-weight: 600;">GUIA MESTRE DE PROJETO (OPENIDE)</div>
+      </div>
+
+      <div class="cover-center">
+        <div class="cover-title">
+          Akasha App<br>
+          <span>Guia Mestre de Produto & Arquitetura</span>
+        </div>
+        <div class="cover-divider"></div>
+        <div class="cover-subtitle">
+          Especificação canônica de Engenharia de Produto, UX Multiplataforma (PC, Tablet e Mobile), Arquitetura de VPS Privada e Estratégia Híbrida de Áudio e Voz.
+        </div>
+      </div>
+
+      <div>
+        <div class="cover-meta-grid">
+          <div class="cover-meta-item">
+            <strong>DOCUMENTO</strong>
+            <span>Guia de Engenharia</span>
+          </div>
+          <div class="cover-meta-item">
+            <strong>FRONTEND</strong>
+            <span>Expo Universal (Web + App)</span>
+          </div>
+          <div class="cover-meta-item">
+            <strong>BACKEND</strong>
+            <span>FastAPI na VPS</span>
+          </div>
+          <div class="cover-meta-item">
+            <strong>DESENVOLVIMENTO</strong>
+            <span>OpenIDE / VS Code</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: PROPOSTA DE VALOR & UX REVOLUCIONÁRIA -->
+  <div class="page">
+    <h2>1. Visão de Produto & Inovações de UX <span class="section-num">01</span></h2>
+    
+    <p>O <strong>Akasha App</strong> é uma aplicação de saúde mental, desenvolvimento pessoal e manifestação que transforma os desejos do usuário em <strong>narrativas sensoriais em áudio imersivo de 3 minutos</strong>, escritas em primeira pessoa do presente e faladas com realismo humano acolhedor.</p>
+    
+    <div class="highlight-box">
+      <p><strong>Diferenciais Competitivos Aprovados para o Akasha (Superando Concorrentes):</strong></p>
+    </div>
+
+    <div class="card-grid-2">
+      <div class="feature-card">
+        <h4>🎙️ Entrada por Voz no Onboarding</h4>
+        <p>Elimina o atrito do preenchimento de texto longo. O usuário pode simplesmente tocar no microfone e desabafar por 20-30 segundos. A fala é transcrita com Whisper/Gemini com total fidelidade emocional.</p>
+      </div>
+      <div class="feature-card">
+        <h4>🧘 Espera Ativa & Respiração Guiada</h4>
+        <p>Durante a síntese do áudio (~20s), uma esfera suave guia o usuário na respiração consciente 4-7-8, preparando o estado fisiológico calmo ideal para a absorção da história.</p>
+      </div>
+      <div class="feature-card">
+        <h4>🎚️ Mixer Sonoro no Player</h4>
+        <p>Controle independente de dois volumes: a voz do narrador e a atmosfera de fundo (chuva suave, lareira, oceano ou frequências terapêuticas como 432Hz e 528Hz).</p>
+      </div>
+      <div class="feature-card">
+        <h4>✨ Diário de Sincronicidades ("Manifestou!")</h4>
+        <p>Botão onde o usuário anota quando fatos da narrativa se concretizam na sua vida real. O app guarda esse acervo de sonhos realizados, garantindo retenção perpétua.</p>
+      </div>
+    </div>
+
+    <h3>O Momento "Aha!" na Home</h3>
+    <p>O usuário sai do onboarding e se depara com cards fotográficos verticais personalizados:</p>
+    <div class="quote-card">
+      “I watch Simone pour coffee on our farmhouse porch.” (3 min ▶)
+    </div>
+    <p>Além disso, o temporizador diário <em>"All stories refresh in 07:24:59"</em> cria o ritual matinal/noturno de escuta antes da virada do ciclo diário.</p>
+  </div>
+
+  <!-- PÁGINA 3: ARQUITETURA TÉCNICA E VPS -->
+  <div class="page">
+    <h2>2. Arquitetura Técnica & Infraestrutura na VPS <span class="section-num">02</span></h2>
+    <p>A arquitetura foi desenhada para atender <strong>PC (Desktop Web), Tablet e Celular (iOS e Android)</strong> com uma <strong>única base de código</strong> e custo fixo previsível na VPS existente.</p>
+
+    <div class="arch-diagram">
+┌────────────────────────────────────────────────────────────────────────┐
+│                   APLICAÇÃO UNIVERSAL (EXPO / REACT NATIVE)            │
+│       [ Smartphone (iOS / Android) ]   [ Tablet ]   [ PC / Web PWA ]   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ HTTPS / REST / WebSockets
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                       SUA VPS (DOCKER + NGINX)                         │
+│   [ Nginx Reverse Proxy com SSL Certbot ]                              │
+│                     │                                                  │
+│   [ FastAPI Backend (Python) ] ──────► [ PostgreSQL (Banco de Dados) ] │
+│                     │                                                  │
+│   [ Redis + Celery / Worker ] ───► [ FFmpeg Studio Post-Production ]   │
+└─────────┬──────────────────┬───────────────────────────────────────────┘
+          │                  │
+          ▼                  ▼
+┌──────────────────┐  ┌─────────────────────┐  ┌────────────────────────┐
+│   OPENAI / GEMINI│  │    ELEVENLABS API   │  │  CLOUDFLARE R2 / S3    │
+│  (Roteiro em 1ªP)│  │ (Vozes & Clonagem)  │  │(Streaming CDN de MP3)  │
+└──────────────────┘  └─────────────────────┘  └────────────────────────┘
+    </div>
+
+    <h3>Os 4 Pilares da Infraestrutura</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Pilar</th>
+          <th>Tecnologia</th>
+          <th>Função Estratégica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Frontend Universal</strong></td>
+          <td>React Native + Expo Router</td>
+          <td>Um único repositório TypeScript. Gera apps nativos iOS/Android com suporte a áudio em background e o Web App PWA para computadores e tablets.</td>
+        </tr>
+        <tr>
+          <td><strong>Backend API</strong></td>
+          <td>FastAPI (Python)</td>
+          <td>Alta performance assíncrona, orquestração de LLMs e integração nativa com bibliotecas de áudio e inteligência artificial.</td>
+        </tr>
+        <tr>
+          <td><strong>Fila & Workers</strong></td>
+          <td>Redis + Celery na VPS</td>
+          <td>Processa a geração dos áudios e transcrições em segundo plano sem travar a navegação do usuário.</td>
+        </tr>
+        <tr>
+          <td><strong>Storage CDN</strong></td>
+          <td>Cloudflare R2 (S3-compatible)</td>
+          <td>Os arquivos MP3 são servidos via CDN global com <strong>zero taxa de tráfego/egress</strong>, impedindo que centenas de streams saturem a banda da sua VPS.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PÁGINA 4: ESTRATÉGIA HÍBRIDA DE ÁUDIO -->
+  <div class="page">
+    <h2>3. Estratégia Híbrida de Voz & Custo Otimizado <span class="section-num">03</span></h2>
+    <p>O maior desafio de produtos com IA de voz é equilibrar <strong>hiper-realismo humano vs. custo por minuto</strong>. O Akasha adota um modelo em 3 camadas que viabiliza o negócio desde o primeiro dia:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Camada</th>
+          <th>Motor / Tecnologia</th>
+          <th>Custo Estimado</th>
+          <th>Aplicação no Produto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Camada 1: Entrada & Volume</strong></td>
+          <td>OpenAI TTS-1-HD (Nova, Shimmer) ou ElevenLabs Flash</td>
+          <td>~US$ 0,07 (~R$ 0,40) por história</td>
+          <td>Onboarding gratuito, feed diário padrão de degustação e histórias rápidas. 5x mais barato que a ElevenLabs comum.</td>
+        </tr>
+        <tr>
+          <td><strong>Camada 2: Pós-Produção no Backend</strong></td>
+          <td>FFmpeg + Pydub (Automatizado na VPS)</td>
+          <td><strong>R$ 0,00</strong> (Processamento na VPS)</td>
+          <td>Aplica EQ Warm nos graves (efeito intimista), reverb de ambiente e mixagem da frequência 432Hz sob a voz. Eleva qualquer voz ao nível de estúdio.</td>
+        </tr>
+        <tr>
+          <td><strong>Camada 3: Assinantes & Clonagem</strong></td>
+          <td>ElevenLabs Multilingual v2 & Voice Clone</td>
+          <td>Coberto pela assinatura</td>
+          <td>Exclusivo para assinantes pagantes que gravam 10 segundos da sua voz para ouvir a si mesmos vivendo o sonho.</td>
+        </tr>
+        <tr>
+          <td><strong>Camada 4: Cache de Tendências</strong></td>
+          <td>CDN Caching</td>
+          <td><strong>R$ 0,00</strong> a partir do 2º play</td>
+          <td>Histórias populares da aba <em>Trending</em> são geradas uma única vez e servidas a milhares de usuários gratuitamente.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box">
+      <p><strong>Por que o Tratamento de Estúdio no Backend Muda o Jogo:</strong><br>
+      A sensação de "voz robótica" surge do áudio seco e sem respiração. Com a equalização de calor auricular, reverberação leve e trilha sonora harmônica geradas no backend, uma voz de baixo custo soa idêntica a uma locução humana em audiolivro premium.</p>
+    </div>
+  </div>
+
+  <!-- PÁGINA 5: MODELO DE DADOS & ROADMAP OPENIDE -->
+  <div class="page">
+    <h2>4. Guia de Implementação no OpenIDE <span class="section-num">04</span></h2>
+    <p>Para guiar o desenvolvimento unificado no seu ambiente (OpenIDE / VS Code), o projeto será estruturado de forma modular e clara:</p>
+
+    <div class="arch-diagram">
+/akasha-app
+  ├── /frontend            # Projeto Expo Universal (React Native + Web)
+  │    ├── /app            # Telas (Expo Router: Onboarding, Home, Player, Profile)
+  │    ├── /components     # Design System (Cards, AudioMixer, Buttons, Waveform)
+  │    └── /services       # API Client & Player State
+  ├── /backend             # API FastAPI na VPS
+  │    ├── /app/api        # Rotas (auth, profiles, stories, voices, syncs)
+  │    ├── /app/audio      # Pipeline FFmpeg (EQ, Reverb, Mixagem 432Hz)
+  │    ├── /app/ai         # Prompt Orchestrator (OpenAI / ElevenLabs / Whisper)
+  │    └── /app/workers    # Fila Celery / Redis
+  └── docker-compose.yml   # Orquestração completa da VPS (FastAPI, DB, Redis, Nginx)
+    </div>
+
+    <h3>Roadmap de Execução Passo a Passo</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Fase</th>
+          <th>Objetivo Principal</th>
+          <th>Entregáveis Concretos</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Sprint 1</strong></td>
+          <td>Fundação & Design System</td>
+          <td>Setup do Expo Universal, fontes serifadas/sans-serif, paleta e componentes base.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 2</strong></td>
+          <td>Onboarding com Entrada de Voz</td>
+          <td>Fluxo de 15 telas, microfone com gravação rápida e tela de respiração consciente.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 3</strong></td>
+          <td>Backend VPS & Pipeline de Áudio</td>
+          <td>Docker Compose na VPS, orquestrador de roteiros e pós-produção FFmpeg.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 4</strong></td>
+          <td>Home, Player Duplo & Retenção</td>
+          <td>Carrossel "For You", mixer sonoro de duas camadas, legendas dinâmicas e timer 24h.</td>
+        </tr>
+        <tr>
+          <td><strong>Sprint 5</strong></td>
+          <td>Monetização & Publicação</td>
+          <td>Clonagem de voz, Paywall com Google Play / App Store e Web PWA responsivo.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-note">
+      Akasha App © 2026 — Especificação Canônica de Produto e Engenharia de Software.
+    </div>
+  </div>
+
+</body>
+</html>

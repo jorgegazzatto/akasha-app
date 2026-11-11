@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: akasha_backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://akasha_user:akasha_secure_pass@db:5432/akasha_db
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend/audio_cache:/app/audio_cache
+
+  # Worker Assíncrono para Geração de Áudios (Celery)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: akasha_worker
+    restart: always
+    command: celery -A app.workers.celery_app worker --loglevel=info -c 2
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://akasha_user:akasha_secure_pass@db:5432/akasha_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - db
+    volumes:
+      - ./backend/audio_cache:/app/audio_cache
+
+  # Banco de Dados PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: akasha_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=akasha_user
+      - POSTGRES_PASSWORD=akasha_secure_pass
+      - POSTGRES_DB=akasha_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Redis para Fila de Tarefas
+  redis:
+    image: redis:7-alpine
+    container_name: akasha_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
