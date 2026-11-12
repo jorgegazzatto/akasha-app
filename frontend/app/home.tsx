@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Platform,
   Modal,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -295,11 +296,18 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Cabeçalho Superior */}
+        {/* Cabeçalho Superior com Logo */}
         <View style={styles.topHeader}>
-          <View>
-            <Text style={styles.greetingGreeting}>AKASHA APP • SANTUÁRIO</Text>
-            <Text style={styles.greetingName}>Olá, {userName} ✨</Text>
+          <View style={styles.headerBrandRow}>
+            <Image
+              source={require('../assets/logo.jpg')}
+              style={styles.brandLogo}
+              resizeMode="cover"
+            />
+            <View>
+              <Text style={styles.greetingGreeting}>AKASHA • SANTUÁRIO</Text>
+              <Text style={styles.greetingName}>Olá, {userName} ✨</Text>
+            </View>
           </View>
           <View style={styles.headerRightActions}>
             <TouchableOpacity
@@ -1187,6 +1195,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 16,
     paddingBottom: 10,
+  },
+  headerBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  brandLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#EED6DC',
   },
   greetingGreeting: {
     fontSize: 10,

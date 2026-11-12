@@ -10,6 +10,7 @@ import {
   Platform,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -293,11 +294,18 @@ export default function PlayerScreen() {
               ]}
             />
             <View style={styles.auraCore}>
-              <Ionicons
-                name={isPlaying ? 'headset' : 'play'}
-                size={28}
-                color={Colors.primaryButton}
+              <Image
+                source={require('../assets/logo.jpg')}
+                style={styles.auraLogoImage}
+                resizeMode="cover"
               />
+              <View style={styles.auraPlayOverlay}>
+                <Ionicons
+                  name={isPlaying ? 'headset' : 'play'}
+                  size={18}
+                  color="#FFFFFF"
+                />
+              </View>
             </View>
             <Text style={styles.auraLabel}>
               {isPlaying ? `${ambientTrackLabels[ambientTrack]} • Tocando` : 'Toque para Iniciar o Áudio 432Hz'}
@@ -629,19 +637,35 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(212, 80, 121, 0.25)',
   },
   auraCore: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#EED6DC',
     shadowColor: Colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 3,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  auraLogoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+  },
+  auraPlayOverlay: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(56, 18, 31, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   auraLabel: {
     marginTop: 12,

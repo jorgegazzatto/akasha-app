@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/theme';
@@ -170,6 +171,11 @@ export default function OnboardingScreen() {
           {/* ================= ETAPA 1: NOME ================= */}
           {step === 1 && (
             <View style={styles.card}>
+              <Image
+                source={require('../../assets/logo.jpg')}
+                style={styles.onboardingLogo}
+                resizeMode="cover"
+              />
               <Text style={styles.titleSerif}>Primeiro, como devemos te chamar?</Text>
               <Text style={styles.subtitle}>
                 Seu nome será o elo condutor e a assinatura de todas as suas narrativas sonoras.
@@ -187,6 +193,11 @@ export default function OnboardingScreen() {
           {/* ================= ETAPA 2: ACOLHIMENTO ================= */}
           {step === 2 && (
             <View style={styles.card}>
+              <Image
+                source={require('../../assets/logo.jpg')}
+                style={styles.onboardingLogo}
+                resizeMode="cover"
+              />
               <Text style={styles.titleSerif}>Que alegria ter você aqui, {formData.name || 'amigo(a)'}.</Text>
               <Text style={styles.bodyPoetic}>
                 Este é o seu refúgio sagrado para acalmar a mente, alinhar sua energia e vivenciar sensorialmente a realidade que você está criando.
@@ -591,6 +602,15 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: '#F2DDE3',
+  },
+  onboardingLogo: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignSelf: 'center',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#EED6DC',
   },
   titleSerif: {
     fontFamily: 'serif',

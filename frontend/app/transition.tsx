@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -127,6 +128,13 @@ export default function TransitionScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {/* Logo Oficial Akasha */}
+        <Image
+          source={require('../assets/logo.jpg')}
+          style={styles.transitionLogo}
+          resizeMode="cover"
+        />
+
         {/* Esfera de Respiração Consciente */}
         <View style={styles.sphereContainer}>
           <Animated.View
@@ -199,6 +207,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingVertical: 32,
+  },
+  transitionLogo: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+    borderColor: '#EED6DC',
+    marginTop: 10,
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
   },
   sphereContainer: {
     alignItems: 'center',
