@@ -17,6 +17,7 @@ import { Audio } from 'expo-av';
 import { Colors } from '../constants/theme';
 import { api } from '../services/api';
 import { akashaStorage } from '../services/storage';
+import { audioEngine } from '../services/audioEngine';
 
 export default function PlayerScreen() {
   const router = useRouter();
@@ -29,9 +30,17 @@ export default function PlayerScreen() {
   const partnerName = (params.partnerName as string) || 'Simone';
   const storyId = (params.storyId as string) || 'story-active';
 
+  // Divide o texto do roteiro em frases para o efeito Karaokê
+  const sentences = scriptText
+    .split(/(?<=[.?!])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
   // Estados de Reprodução & Tempo
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioStarted, setAudioStarted] = useState(false);
   const [positionSeconds, setPositionSeconds] = useState(0);
+  const [activeSentenceIndex, setActiveSentenceIndex] = useState(0);
   const durationSeconds = 180; // 3 minutos padrão
 
   // Mixer Sonoro de 2 Camadas
@@ -50,20 +59,61 @@ export default function PlayerScreen() {
   const auraOpacityAnim = useRef(new Animated.Value(0.4)).current;
   const scrollRef = useRef<ScrollView>(null);
 
-  // Divide o texto do roteiro em frases para o efeito Karaokê
-  const sentences = scriptText
-    .split(/(?<=[.?!])\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  // Cálculo de progresso
+  const progressRatio = Math.min(1, (activeSentenceIndex + 1) / Math.max(1, sentences.length));
 
-  // Cálculo da frase ativa baseado na porcentagem de tempo decorrido
-  const progressRatio = Math.min(1, positionSeconds / durationSeconds);
-  const activeSentenceIndex = Math.min(
-    sentences.length - 1,
-    Math.floor(progressRatio * sentences.length)
-  );
+  // Inicia ou retoma a reprodução acústica com ambas as camadas
+  const startPlayback = (startIndex: number = activeSentenceIndex) => {
+    setAudioStarted(true);
+    setIsPlaying(true);
+    audioEngine.startAmbient(ambientTrack, ambientVolume);
+    audioEngine.startVoice(
+      sentences,
+      startIndex,
+      voiceVolume,
+      (idx) => {
+        setActiveSentenceIndex(idx);
+        setPositionSeconds(Math.round((idx / Math.max(1, sentences.length)) * durationSeconds));
+      },
+      () => {
+        setIsPlaying(false);
+        setPositionSeconds(durationSeconds);
+      }
+    );
+  };
 
-  // Setup de Áudio em Segundo Plano com expo-av
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      audioEngine.pause();
+    } else {
+      setIsPlaying(true);
+      if (!audioStarted) {
+        startPlayback(activeSentenceIndex);
+      } else {
+        audioEngine.resume();
+      }
+    }
+  };
+
+  const handleChangeVoiceVolume = (v: number) => {
+    setVoiceVolume(v);
+    audioEngine.setVoiceVolume(v);
+  };
+
+  const handleChangeAmbientVolume = (v: number) => {
+    setAmbientVolume(v);
+    audioEngine.setAmbientVolume(v);
+  };
+
+  const handleChangeAmbientTrack = (track: '432hz' | '528hz' | 'rain' | 'fire' | 'waves') => {
+    setAmbientTrack(track);
+    if (isPlaying) {
+      audioEngine.startAmbient(track, ambientVolume);
+    }
+  };
+
+  // Setup de Áudio em Segundo Plano com expo-av e limpeza ao desmontar
   useEffect(() => {
     async function configureAudio() {
       try {
@@ -78,16 +128,19 @@ export default function PlayerScreen() {
       }
     }
     configureAudio();
+
+    return () => {
+      audioEngine.stopAll();
+    };
   }, []);
 
-  // Timer de Reprodução Simulado e Avanço Contínuo
+  // Timer de incremento de posição em segundos
   useEffect(() => {
     let interval: any = null;
     if (isPlaying) {
       interval = setInterval(() => {
         setPositionSeconds((prev) => {
           if (prev >= durationSeconds) {
-            setIsPlaying(false);
             return durationSeconds;
           }
           return prev + 1;
@@ -144,7 +197,11 @@ export default function PlayerScreen() {
 
   // Controles de Navegação de Tempo
   const handleSeekRelative = (seconds: number) => {
-    setPositionSeconds((prev) => Math.max(0, Math.min(durationSeconds, prev + seconds)));
+    const delta = seconds > 0 ? 1 : -1;
+    const newIdx = Math.max(0, Math.min(sentences.length - 1, activeSentenceIndex + delta));
+    setActiveSentenceIndex(newIdx);
+    setPositionSeconds(Math.round((newIdx / Math.max(1, sentences.length)) * durationSeconds));
+    audioEngine.seekSentence(newIdx);
   };
 
   const handleToggleFavorite = () => {
@@ -220,8 +277,12 @@ export default function PlayerScreen() {
           contentContainerStyle={styles.lyricsContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Card Central com Aura Pulsante */}
-          <View style={styles.auraCard}>
+          {/* Card Central com Aura Pulsante Interativa */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={togglePlayPause}
+            style={styles.auraCard}
+          >
             <Animated.View
               style={[
                 styles.auraOuterRing,
@@ -233,15 +294,21 @@ export default function PlayerScreen() {
             />
             <View style={styles.auraCore}>
               <Ionicons
-                name={isPlaying ? 'headset' : 'pause'}
+                name={isPlaying ? 'headset' : 'play'}
                 size={28}
                 color={Colors.primaryButton}
               />
             </View>
             <Text style={styles.auraLabel}>
-              {ambientTrackLabels[ambientTrack]} • Ativo em 2º Plano
+              {isPlaying ? `${ambientTrackLabels[ambientTrack]} • Tocando` : 'Toque para Iniciar o Áudio 432Hz'}
             </Text>
-          </View>
+            {!audioStarted && (
+              <View style={styles.audioHintPill}>
+                <Ionicons name="volume-high" size={13} color="#FFFFFF" />
+                <Text style={styles.audioHintText}>Ativar Som Acústico</Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
           {/* Legendas Sincronizadas Estilo Karaokê */}
           <View style={styles.sentencesContainer}>
@@ -292,7 +359,7 @@ export default function PlayerScreen() {
               {[0.0, 0.5, 0.8, 1.0].map((v) => (
                 <TouchableOpacity
                   key={v}
-                  onPress={() => setVoiceVolume(v)}
+                  onPress={() => handleChangeVoiceVolume(v)}
                   style={[
                     styles.mixerPill,
                     voiceVolume === v && styles.mixerPillActive,
@@ -321,7 +388,7 @@ export default function PlayerScreen() {
               {[0.2, 0.5, 0.8, 1.0].map((v) => (
                 <TouchableOpacity
                   key={v}
-                  onPress={() => setAmbientVolume(v)}
+                  onPress={() => handleChangeAmbientVolume(v)}
                   style={[
                     styles.mixerPill,
                     ambientVolume === v && styles.mixerPillActive,
@@ -355,7 +422,7 @@ export default function PlayerScreen() {
             ].map((track) => (
               <TouchableOpacity
                 key={track.id}
-                onPress={() => setAmbientTrack(track.id as any)}
+                onPress={() => handleChangeAmbientTrack(track.id as any)}
                 style={[
                   styles.trackPill,
                   ambientTrack === track.id && styles.trackPillActive,
@@ -416,7 +483,7 @@ export default function PlayerScreen() {
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.mainPlayButton}
-              onPress={() => setIsPlaying(!isPlaying)}
+              onPress={togglePlayPause}
             >
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
@@ -582,6 +649,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textSecondary,
     letterSpacing: 0.3,
+  },
+  audioHintPill: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primaryButton,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  audioHintText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   sentencesContainer: {
     gap: 14,
