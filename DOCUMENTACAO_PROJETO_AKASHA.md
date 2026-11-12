@@ -1,9 +1,11 @@
 # AKASHA APP — GUIA MESTRE DE PRODUTO, ARQUITETURA E ENGENHARIA
 
-> **Versão do Documento:** 2.1  
-> **Status:** Todos os 8 Sprints (Sprint 0 ao 7) Concluídos & Validados  
+> **Versão do Documento:** 2.2  
+> **Status:** Produção Completa Ativa (Frontend Web & Backend API Operacionais na VPS)  
+> **Frontend Web Oficial:** `https://appakh.elohdigital.com.br`  
+> **Backend API Oficial:** `https://apiakh.elohdigital.com.br`  
 > **Ambiente de Desenvolvimento:** OpenIDE / VS Code  
-> **VPS Dokploy:** `https://apiakh.elohdigital.com.br` (Dokploy + Traefik SSL + PostgreSQL + Redis + Celery + FastAPI)  
+> **VPS Dokploy:** `136.248.82.204` (Dokploy + Traefik SSL + PostgreSQL + Redis + Celery + FastAPI + Nginx)  
 > **Repositório GitHub:** `https://github.com/jorgegazzatto/akasha-app` (`main`)  
 > **Classificação:** Guia Canônico do Projeto  
 
