@@ -40,6 +40,31 @@ services:
       - "traefik.http.routers.akasha-backend-websecure.tls.certresolver=letsencrypt"
       - "traefik.http.services.akasha-backend-websecure.loadbalancer.server.port=8000"
 
+  # Frontend Universal Web (Expo Router + React Native Web via Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: akasha_frontend
+    restart: always
+    expose:
+      - "80"
+    ports:
+      - "8085:80"
+    networks:
+      - dokploy-network
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.akasha-frontend-web.rule=Host(`appakh.elohdigital.com.br`)"
+      - "traefik.http.routers.akasha-frontend-web.entrypoints=web"
+      - "traefik.http.routers.akasha-frontend-web.middlewares=redirect-to-https@file"
+      - "traefik.http.routers.akasha-frontend-websecure.rule=Host(`appakh.elohdigital.com.br`)"
+      - "traefik.http.routers.akasha-frontend-websecure.entrypoints=websecure"
+      - "traefik.http.routers.akasha-frontend-websecure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.akasha-frontend-websecure.loadbalancer.server.port=80"
+
   # Worker Assíncrono para Geração de Áudios (Celery)
   worker:
     build:
